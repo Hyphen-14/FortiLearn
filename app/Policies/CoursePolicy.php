@@ -43,3 +43,4 @@ class CoursePolicy
         return $user->isAdmin() || $course->instructor_id === $user->id;
     }
 }
+

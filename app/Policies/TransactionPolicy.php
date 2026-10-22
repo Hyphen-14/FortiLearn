@@ -22,3 +22,4 @@ class TransactionPolicy
         return $transaction->user_id === $user->id;
     }
 }
+

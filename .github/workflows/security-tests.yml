@@ -1,8 +1,8 @@
-name: SecureAcademy Automated Security Tests
+name: FortiLearn Automated Security Tests
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "feature/*" ]
   pull_request:
     branches: [ "main", "develop" ]
 
@@ -40,8 +40,9 @@ jobs:
         DB_DATABASE: database/database.sqlite
       run: php artisan migrate --seed --force
 
-    - name: Execute Security Test Suite
+    - name: Execute Complete Security Test Suite
       env:
         DB_CONNECTION: sqlite
         DB_DATABASE: database/database.sqlite
-      run: php artisan test --filter=SecurityArchitectureTest
+      run: php artisan test
+
