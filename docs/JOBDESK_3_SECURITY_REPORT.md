@@ -319,3 +319,4 @@ Saat sesi audit kode (Sesi 10), kelompok lawan dipersilakan melakukan pengujian 
 3. Atur payload type ke **Null Payloads**, generate 20 requests secara paralel (Resource Pool: Concurrent Requests = 20).
 4. Start Attack.
 5. **Ekspektasi Keamanan:** Hanya tepat 1 request yang menghasilkan HTTP 302 Redirect (sukses), sedangkan 19 request lainnya menghasilkan pesan error "Saldo tidak mencukupi" atau "Anda sudah terdaftar". Saldo akhir akun tepat Rp 0 dan tidak pernah menjadi negatif.
+
