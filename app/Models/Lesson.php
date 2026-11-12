@@ -9,6 +9,7 @@ class Lesson extends Model
 {
     use HasFactory;
 
+    // course_id / section_id are set through relations after an ownership check, never mass-assigned from input.
     protected $fillable = [
         'title',
         'lesson_order',
