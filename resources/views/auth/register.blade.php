@@ -3,51 +3,92 @@
 @section('title', 'Daftar Akun Baru')
 
 @section('content')
-<div class="max-w-md mx-auto my-8">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Daftar Akun Baru</h1>
-            <p class="text-slate-500 text-sm mt-1">Mulai belajar materi keamanan siber bersertifikasi</p>
+<div class="max-w-md mx-auto my-4">
+    <div class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
+        <div class="p-6 bg-[#090D16] text-white border-b border-slate-800">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-1">
+                Mulai Perjalanan Belajar Anda
+            </span>
+            <h1 class="text-xl font-extrabold text-white tracking-tight">Buat Akun FortiLearn</h1>
+            <p class="text-slate-400 text-xs mt-1">
+                Daftar gratis untuk mengakses katalog kursus profesional dan fitur Dompet Belajar.
+            </p>
         </div>
 
-        <form action="{{ route('register') }}" method="POST" class="space-y-4">
-            @csrf
+        <div class="p-6 md:p-8">
+            <form action="{{ route('register') }}" method="POST" class="space-y-4">
+                @csrf
 
-            <div>
-                <label for="name" class="block text-sm font-semibold text-slate-700 mb-1">Nama Lengkap</label>
-                <input type="text" name="name" id="name" required value="{{ old('name') }}"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
+                <div>
+                    <label for="name" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Nama Lengkap
+                    </label>
+                    <input type="text"
+                           name="name"
+                           id="name"
+                           autocomplete="name"
+                           required
+                           value="{{ old('name') }}"
+                           placeholder="Nama Lengkap Anda"
+                           class="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 transition text-sm">
+                </div>
+
+                <div>
+                    <label for="email" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Alamat Email
+                    </label>
+                    <input type="email"
+                           name="email"
+                           id="email"
+                           inputmode="email"
+                           autocomplete="username"
+                           required
+                           value="{{ old('email') }}"
+                           placeholder="nama@email.com"
+                           class="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 transition text-sm">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Kata Sandi
+                    </label>
+                    <input type="password"
+                           name="password"
+                           id="password"
+                           autocomplete="new-password"
+                           required
+                           minlength="8"
+                           placeholder="Minimal 8 karakter"
+                           class="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 transition text-sm">
+                </div>
+
+                <div>
+                    <label for="password_confirmation" class="block text-xs font-bold text-slate-700 mb-1.5">
+                        Konfirmasi Kata Sandi
+                    </label>
+                    <input type="password"
+                           name="password_confirmation"
+                           id="password_confirmation"
+                           autocomplete="new-password"
+                           required
+                           minlength="8"
+                           placeholder="Ulangi kata sandi Anda"
+                           class="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 transition text-sm">
+                </div>
+
+                <button type="submit"
+                        class="w-full min-h-[44px] py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+                    Daftar Sekarang
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-600">
+                Sudah memiliki akun?
+                <a href="{{ route('login') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
+                    Masuk di sini
+                </a>
             </div>
-
-            <div>
-                <label for="email" class="block text-sm font-semibold text-slate-700 mb-1">Alamat Email</label>
-                <input type="email" name="email" id="email" required value="{{ old('email') }}"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
-            </div>
-
-            <div>
-                <label for="password" class="block text-sm font-semibold text-slate-700 mb-1">Kata Sandi</label>
-                <input type="password" name="password" id="password" required minlength="8"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
-                <span class="text-xs text-slate-400 mt-1 block">Minimal 8 karakter</span>
-            </div>
-
-            <div>
-                <label for="password_confirmation" class="block text-sm font-semibold text-slate-700 mb-1">Konfirmasi Kata Sandi</label>
-                <input type="password" name="password_confirmation" id="password_confirmation" required minlength="8"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition text-sm">
-            </div>
-
-            <button type="submit" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm transition">
-                Daftar Sebagai Siswa
-            </button>
-        </form>
-
-        <div class="mt-6 text-center text-sm text-slate-500">
-            Sudah memiliki akun?
-            <a href="{{ route('login') }}" class="font-semibold text-indigo-600 hover:text-indigo-700">Masuk di sini</a>
         </div>
     </div>
 </div>
 @endsection
-

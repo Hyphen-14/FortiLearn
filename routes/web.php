@@ -9,17 +9,24 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes - FortiLearn (Secure E-Learning)
+| Web Routes - FortiLearn (E-Learning Marketplace)
 |--------------------------------------------------------------------------
 */
 
-// 1. Public Catalog Routes
+// 1. Public & Discovery Routes (Dedicated Pages for Sidebar Navigation)
 Route::get('/', function () {
     return redirect()->route('catalog.index');
 });
 
 Route::get('/courses', [CatalogController::class, 'index'])->name('catalog.index');
+Route::get('/categories', [CatalogController::class, 'categories'])->name('catalog.categories');
+Route::get('/my-courses', [CatalogController::class, 'myCourses'])->name('catalog.my-courses');
+Route::get('/wishlist', [CatalogController::class, 'wishlist'])->name('catalog.wishlist');
+Route::get('/help', [CatalogController::class, 'help'])->name('catalog.help');
 Route::get('/courses/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
+Route::get('/courses/{slug}/lessons/{lesson}/stream', [CatalogController::class, 'streamLesson'])
+    ->middleware('auth')
+    ->name('catalog.lesson.stream');
 
 // 2. Authentication Routes
 Route::middleware('guest')->group(function () {

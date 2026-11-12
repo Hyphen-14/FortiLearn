@@ -230,4 +230,51 @@ class StudentCheckoutSecurityTest extends TestCase
         $this->assertEquals(300000.00, (float) $this->student1->fresh()->balance);
         $this->assertEquals(1, Enrollment::where('user_id', $this->student1->id)->where('course_id', $this->course->id)->count());
     }
+
+    /**
+     * Test 9: Protected Lesson Media Streaming (Anti-IDOR on Course Video & PDF Modules).
+     */
+    public function test_anti_idor_protected_lesson_media_streaming(): void
+    {
+        $lesson = $this->course->lessons()->create([
+            'title' => 'Panduan Praktik PDF',
+            'lesson_order' => 1,
+            'content_type' => 'pdf',
+            'file_path' => 'private/courses/test-lesson-1.pdf',
+            'original_filename' => 'Panduan Praktik PDF.pdf',
+            'duration_seconds' => 600,
+        ]);
+
+        // Unenrolled student2 attempts to stream lesson PDF -> must be blocked with 403 Forbidden
+        $this->actingAs($this->student2);
+        $blockedResponse = $this->get(route('catalog.lesson.stream', [
+            'slug' => $this->course->slug,
+            'lesson' => $lesson->id,
+        ]));
+        $blockedResponse->assertStatus(403);
+
+        // Student1 purchases the course and streams the lesson PDF -> 200 OK with application/pdf
+        $this->actingAs($this->student1);
+        $this->post(route('checkout.process', $this->course->id));
+
+        $allowedResponse = $this->get(route('catalog.lesson.stream', [
+            'slug' => $this->course->slug,
+            'lesson' => $lesson->id,
+        ]));
+        $allowedResponse->assertStatus(200);
+        $allowedResponse->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    /**
+     * Test 10: Dedicated Sidebar Navigation Routes render cleanly.
+     */
+    public function test_sidebar_navigation_routes_render_cleanly(): void
+    {
+        $this->get(route('catalog.categories'))->assertStatus(200);
+        $this->get(route('catalog.wishlist'))->assertStatus(200);
+        $this->get(route('catalog.help'))->assertStatus(200);
+
+        $this->actingAs($this->student1);
+        $this->get(route('catalog.my-courses'))->assertStatus(200);
+    }
 }

@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -11,110 +14,149 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database with multi-category commercial courses.
      */
     public function run(): void
     {
         // 1. Admin Account
         $admin = User::firstOrCreate(
             ['email' => 'admin@secureacademy.test'],
-            [
-                'name' => 'Security Administrator',
-                'password' => 'PasswordAdmin123!',
-                'role' => 'admin',
-                'balance' => 0.00,
-                'is_active' => true,
-            ]
+            ['name' => 'Administrator Utama', 'password' => 'PasswordAdmin123!']
         );
+        $admin->role = 'admin';
+        $admin->balance = 0.00;
+        $admin->is_active = true;
+        $admin->save();
 
-        // 2. Instructor Account
-        $instructor = User::firstOrCreate(
+        // 2. Instructors across Disciplines
+        $instructorTech = User::firstOrCreate(
             ['email' => 'instructor@secureacademy.test'],
-            [
-                'name' => 'Prof. Cyber Instructor',
-                'password' => 'PasswordInstruktur123!',
-                'role' => 'instructor',
-                'balance' => 0.00,
-                'is_active' => true,
-            ]
+            ['name' => 'Rizky Pratama, M.Kom.', 'password' => 'PasswordInstruktur123!']
         );
+        $instructorTech->role = 'instructor';
+        $instructorTech->balance = 0.00;
+        $instructorTech->is_active = true;
+        $instructorTech->save();
 
-        // 3. Student Account with Wallet Balance
+        $instructorDesign = User::firstOrCreate(
+            ['email' => 'design.mentor@secureacademy.test'],
+            ['name' => 'Nadia Kusuma, S.Ds.', 'password' => 'PasswordInstruktur123!']
+        );
+        $instructorDesign->role = 'instructor';
+        $instructorDesign->balance = 0.00;
+        $instructorDesign->is_active = true;
+        $instructorDesign->save();
+
+        // 3. Student Accounts with Wallet Balance
         $student1 = User::firstOrCreate(
             ['email' => 'student1@secureacademy.test'],
-            [
-                'name' => 'Alice Student',
-                'password' => 'PasswordStudent123!',
-                'role' => 'student',
-                'balance' => 500000.00, // Rp 500.000 saldo awal
-                'is_active' => true,
-            ]
+            ['name' => 'Alice Maharani', 'password' => 'PasswordStudent123!']
         );
+        $student1->role = 'student';
+        $student1->balance = 500000.00;
+        $student1->is_active = true;
+        $student1->save();
 
         $student2 = User::firstOrCreate(
             ['email' => 'student2@secureacademy.test'],
-            [
-                'name' => 'Bob Student',
-                'password' => 'PasswordStudent123!',
-                'role' => 'student',
-                'balance' => 100000.00, // Rp 100.000 saldo awal
-                'is_active' => true,
-            ]
+            ['name' => 'Budi Hartono', 'password' => 'PasswordStudent123!']
         );
+        $student2->role = 'student';
+        $student2->balance = 100000.00;
+        $student2->is_active = true;
+        $student2->save();
 
-        // 4. Sample Published Courses for Catalog & Checkout Testing
+        // 4. Multi-Category Commercial Courses (Udemy-style Marketplace)
         $coursesData = [
             [
-                'title' => 'Web Application Security & White-Box Pentesting',
-                'slug' => 'web-application-security-white-box-pentesting',
-                'description' => 'Pelajari teknik audit kode sumber mendalam, identifikasi kerentanan OWASP Top 10, dan mitigasi eksploitasi berbahaya pada aplikasi web modern.',
-                'price' => 250000.00,
+                'instructor_id' => $instructorTech->id,
+                'category' => 'Frontend',
+                'title' => 'Front-End Web Development Modern dengan React & TypeScript',
+                'slug' => 'frontend-web-development-react-typescript',
+                'description' => 'Pelajari pembuatan antarmuka web modern dari dasar hingga mahir. Bangun komponen interaktif, manajemen state, dan proyek portofolio siap kerja.',
+                'price' => 185000.00,
                 'status' => 'published',
                 'lessons' => [
-                    ['title' => 'Pengenalan Arsitektur Web & Analisis Vektor Serangan', 'content_type' => 'video', 'duration_seconds' => 900],
-                    ['title' => 'Eksploitasi & Mitigasi SQL Injection pada Prepared Statements', 'content_type' => 'video', 'duration_seconds' => 1200],
-                    ['title' => 'Cheat Sheet Mitigasi Kerentanan Web (Panduan PDF)', 'content_type' => 'pdf', 'duration_seconds' => 0],
-                ]
+                    ['title' => 'Arsitektur Komponen Modern & JSX Dasar', 'content_type' => 'video', 'duration_seconds' => 960],
+                    ['title' => 'State Management, Hooks & Integrasi REST API', 'content_type' => 'video', 'duration_seconds' => 1420],
+                    ['title' => 'Panduan Desain Sistem & Optimasi Performa Web', 'content_type' => 'pdf', 'duration_seconds' => 0],
+                ],
             ],
             [
-                'title' => 'OWASP Top 10: Defensive Secure Programming',
-                'slug' => 'owasp-top-10-defensive-secure-programming',
-                'description' => 'Kuasai standar rekayasa perangkat lunak aman: sanitasi XSS, pencegahan CSRF, session fixation defense, dan validasi file upload anti-RCE.',
-                'price' => 175000.00,
+                'instructor_id' => $instructorTech->id,
+                'category' => 'Backend',
+                'title' => 'Backend Engineering: Arsitektur RESTful API & Microservices',
+                'slug' => 'backend-engineering-restful-api-microservices',
+                'description' => 'Kuasai perancangan server berkinerja tinggi, pemodelan database relasional, autentikasi pengguna, serta deployment aplikasi skala industri.',
+                'price' => 240000.00,
                 'status' => 'published',
                 'lessons' => [
-                    ['title' => 'Anatomi Broken Access Control & IDOR', 'content_type' => 'video', 'duration_seconds' => 850],
-                    ['title' => 'Mengamankan Upload File dengan Magic Bytes & Private Storage', 'content_type' => 'video', 'duration_seconds' => 1100],
-                ]
+                    ['title' => 'Perancangan Skema Database & Optimasi Indeks', 'content_type' => 'video', 'duration_seconds' => 1150],
+                    ['title' => 'Membangun Layanan Transaksi Pembayaran yang Andal', 'content_type' => 'video', 'duration_seconds' => 1380],
+                    ['title' => 'Dokumentasi Standar OpenAPI & Postman Collection', 'content_type' => 'pdf', 'duration_seconds' => 0],
+                ],
             ],
             [
-                'title' => 'Secure Transaction Engineering & Concurrency Defense',
-                'slug' => 'secure-transaction-engineering-concurrency-defense',
-                'description' => 'Membangun sistem pembayaran e-commerce anti-kebocoran dana: mitigasi Race Condition, Pessimistic Locking, dan integritas ACID.',
-                'price' => 350000.00,
+                'instructor_id' => $instructorDesign->id,
+                'category' => 'UI/UX Design',
+                'title' => 'Masterclass UI/UX Design: Riset Pengguna hingga Prototyping Figma',
+                'slug' => 'masterclass-ui-ux-design-figma-prototyping',
+                'description' => 'Rancang produk digital yang disukai pengguna. Pelajari alur kerja desain produk mulai dari wireframing, design tokens, hingga usability testing.',
+                'price' => 165000.00,
                 'status' => 'published',
                 'lessons' => [
-                    ['title' => 'Mekanisme Time-Of-Check To Time-Of-Use (TOCTOU) Exploitation', 'content_type' => 'video', 'duration_seconds' => 1050],
-                    ['title' => 'Implementasi Database Row-Level Locking (SELECT FOR UPDATE)', 'content_type' => 'video', 'duration_seconds' => 1350],
-                ]
+                    ['title' => 'Prinsip Hierarki Visual, Tipografi & Sistem Grid', 'content_type' => 'video', 'duration_seconds' => 890],
+                    ['title' => 'Auto-Layout Lanjutan & Interactive Components di Figma', 'content_type' => 'video', 'duration_seconds' => 1260],
+                    ['title' => 'Template Design System & UI Kit Komersial', 'content_type' => 'pdf', 'duration_seconds' => 0],
+                ],
             ],
             [
-                'title' => 'Ethical Hacking & Network Defense Fundamentals',
-                'slug' => 'ethical-hacking-network-defense-fundamentals',
-                'description' => 'Panduan fundamental cybersecurity untuk pemula: pemindaian jaringan, hardening server, dan enkripsi data end-to-end.',
-                'price' => 95000.00,
+                'instructor_id' => $instructorTech->id,
+                'category' => 'Data & AI',
+                'title' => 'Data Science & Machine Learning Terapan dengan Python',
+                'slug' => 'data-science-machine-learning-python',
+                'description' => 'Olahan data bisnis menjadi keputusan strategis. Pelajari analisis eksploratif, visualisasi data, dan pemodelan prediktif menggunakan Python.',
+                'price' => 275000.00,
                 'status' => 'published',
                 'lessons' => [
-                    ['title' => 'Dasar Jaringan & Model Pertahanan Perimeter', 'content_type' => 'video', 'duration_seconds' => 700],
-                ]
+                    ['title' => 'Eksplorasi Data & Pembersihan Dataset menggunakan Pandas', 'content_type' => 'video', 'duration_seconds' => 1080],
+                    ['title' => 'Supervised Learning: Regresi & Klasifikasi Praktis', 'content_type' => 'video', 'duration_seconds' => 1500],
+                ],
+            ],
+            [
+                'instructor_id' => $instructorDesign->id,
+                'category' => 'Bisnis',
+                'title' => 'Manajemen Produk Digital & Strategi Produktivitas Tim',
+                'slug' => 'manajemen-produk-digital-produktivitas-tim',
+                'description' => 'Gandakan efektivitas kerja tim dan peluncuran produk. Pelajari penyusunan roadmap, prioritas fitur, dan metrik pertumbuhan bisnis.',
+                'price' => 145000.00,
+                'status' => 'published',
+                'lessons' => [
+                    ['title' => 'Kerangka Kerja Prioritas Produk & Perencanaan Sprint', 'content_type' => 'video', 'duration_seconds' => 840],
+                    ['title' => 'Membangun Kebiasaan Kerja Fokus & Manajemen Waktu', 'content_type' => 'pdf', 'duration_seconds' => 0],
+                ],
+            ],
+            [
+                'instructor_id' => $instructorTech->id,
+                'category' => 'Cyber Security',
+                'title' => 'Keamanan Aplikasi Web & Praktik Pemrograman Aman',
+                'slug' => 'keamanan-aplikasi-web-pemrograman-aman',
+                'description' => 'Lindungi aplikasi modern dari ancaman siber. Pelajari teknik pengujian keamanan aplikasi, perlindungan data pengguna, dan standar industri.',
+                'price' => 220000.00,
+                'status' => 'published',
+                'lessons' => [
+                    ['title' => 'Pengenalan Keamanan Web & Perlindungan Autentikasi', 'content_type' => 'video', 'duration_seconds' => 950],
+                    ['title' => 'Praktik Terbaik Pengamanan Transaksi & Data Finansial', 'content_type' => 'video', 'duration_seconds' => 1250],
+                ],
             ],
         ];
 
         foreach ($coursesData as $courseItem) {
-            $course = \App\Models\Course::firstOrCreate(
+            $course = Course::updateOrCreate(
                 ['slug' => $courseItem['slug']],
                 [
-                    'instructor_id' => $instructor->id,
+                    'instructor_id' => $courseItem['instructor_id'],
+                    'category' => $courseItem['category'],
                     'title' => $courseItem['title'],
                     'description' => $courseItem['description'],
                     'price' => $courseItem['price'],
@@ -123,7 +165,7 @@ class DatabaseSeeder extends Seeder
             );
 
             foreach ($courseItem['lessons'] as $index => $lessonItem) {
-                \App\Models\Lesson::firstOrCreate(
+                $lesson = Lesson::updateOrCreate(
                     [
                         'course_id' => $course->id,
                         'title' => $lessonItem['title'],
@@ -136,14 +178,16 @@ class DatabaseSeeder extends Seeder
                         'duration_seconds' => $lessonItem['duration_seconds'],
                     ]
                 );
+
+                \App\Services\DummyMediaGenerator::ensureLessonMediaExists($course, $lesson);
             }
         }
 
-        // 5. Seed initial enrollment for Student 1 in Course 4
-        $course4 = \App\Models\Course::where('slug', 'ethical-hacking-network-defense-fundamentals')->first();
-        if ($course4) {
-            \App\Models\Enrollment::firstOrCreate(
-                ['user_id' => $student1->id, 'course_id' => $course4->id],
+        // 5. Seed initial enrollment for Student 1 so "Kursus Saya" & progress rings are populated immediately
+        $enrolledCourse = Course::where('slug', 'frontend-web-development-react-typescript')->first();
+        if ($enrolledCourse) {
+            Enrollment::firstOrCreate(
+                ['user_id' => $student1->id, 'course_id' => $enrolledCourse->id],
                 ['enrolled_at' => now()]
             );
         }

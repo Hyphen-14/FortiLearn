@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('instructor_id')->constrained('users')->onDelete('cascade');
+            $table->string('category')->default('Frontend');
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('description');
