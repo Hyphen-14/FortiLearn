@@ -53,3 +53,32 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 });
+
+// 4. Admin Protected Routes (Role: admin)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', function () {
+        return response()->json(['status' => 'success', 'message' => 'Admin Dashboard Access Granted']);
+    })->name('dashboard');
+    Route::get('/users', function () {
+        return response()->json(['status' => 'success', 'message' => 'User Management']);
+    })->name('users.index');
+    Route::get('/courses', function () {
+        return response()->json(['status' => 'success', 'message' => 'Course Moderation']);
+    })->name('courses.index');
+});
+
+// 5. Instructor Protected Routes (Role: instructor)
+Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('instructor.')->group(function () {
+    Route::post('/courses/{course}/lessons/upload', function (\Illuminate\Http\Request $request, \App\Models\Course $course, \App\Services\FileUploadService $fileUploadService) {
+        $request->validate([
+            'file' => ['required', 'file'],
+            'type' => ['required', 'in:video,pdf'],
+        ]);
+        try {
+            $result = $fileUploadService->storeSecureLessonFile($request->file('file'), $request->input('type'));
+            return response()->json(['status' => 'success', 'file' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    })->name('lessons.upload');
+});

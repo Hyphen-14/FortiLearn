@@ -42,10 +42,37 @@ class FileUploadService
             throw new InvalidArgumentException('Ukuran file melebihi batas maksimum yang diizinkan.');
         }
 
-        // 2. Strict Magic Bytes Inspection using finfo
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $realMime = finfo_file($finfo, $file->getRealPath());
-        finfo_close($finfo);
+        // 2. Prevent Dangerous Extensions & Script Masquerading
+        $clientExt = strtolower($file->getClientOriginalExtension());
+        $dangerousExtensions = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'sh', 'exe', 'bat', 'pl', 'py', 'cgi'];
+        if (in_array($clientExt, $dangerousExtensions, true)) {
+            throw new InvalidArgumentException('Ekstensi file berbahaya terdeteksi dan diblokir.');
+        }
+
+        // 3. Strict Magic Bytes Inspection using finfo
+        $realMime = null;
+        $filePath = $file->getRealPath();
+        if ($filePath && file_exists($filePath)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $detected = @finfo_file($finfo, $filePath);
+            finfo_close($finfo);
+            if ($detected !== false) {
+                $realMime = $detected;
+            }
+        }
+
+        if (! $realMime) {
+            $headerBytes = @file_get_contents($filePath, false, null, 0, 4096);
+            if ($headerBytes !== false && $headerBytes !== '') {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $realMime = finfo_buffer($finfo, $headerBytes);
+                finfo_close($finfo);
+            }
+        }
+
+        if (! $realMime) {
+            $realMime = $file->getMimeType();
+        }
 
         if (! array_key_exists($realMime, self::ALLOWED_MIME_TYPES)) {
             throw new InvalidArgumentException("Tipe MIME ($realMime) tidak diizinkan. Hanya MP4, PDF, JPG, PNG.");
@@ -61,9 +88,17 @@ class FileUploadService
             throw new InvalidArgumentException('Materi dokumen harus berformat PDF yang valid.');
         }
 
-        // 3. Prevent Embedded Executables / Webshell Payload Inspection
-        $fileHeader = file_get_contents($file->getRealPath(), false, null, 0, 1024);
-        if (str_contains($fileHeader, '<?php') || str_contains($fileHeader, '<?=') || str_contains($fileHeader, '<script')) {
+        // 4. Prevent Embedded Executables / Webshell Payload Inspection
+        $fileHeader = @file_get_contents($filePath, false, null, 0, 2048);
+        if ($fileHeader === false && method_exists($file, 'getContent')) {
+            try {
+                $fileHeader = substr($file->getContent(), 0, 2048);
+            } catch (\Throwable) {
+                $fileHeader = '';
+            }
+        }
+
+        if ($fileHeader && (str_contains($fileHeader, '<?php') || str_contains($fileHeader, '<?=') || str_contains($fileHeader, '<script'))) {
             throw new InvalidArgumentException('File mengandung signature kode berbahaya (Webshell/Script injection dicegah).');
         }
 
