@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Audit;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +29,11 @@ class RoleMiddleware
         }
 
         if (! in_array($user->role, $roles, true)) {
+            Audit::record('access.role_denied', $request, [
+                'path' => $request->path(),
+                'role' => $user->role,
+                'required' => $roles,
+            ]);
             abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk mengakses sumber daya ini.');
         }
 

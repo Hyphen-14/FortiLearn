@@ -58,8 +58,12 @@
                            autocomplete="new-password"
                            required
                            minlength="8"
-                           placeholder="Minimal 8 karakter"
+                           maxlength="72"
+                           aria-describedby="password-rules"
                            class="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 transition text-sm">
+                    <p id="password-rules" class="mt-1.5 text-xs text-slate-600">
+                        8 sampai 72 karakter, berisi huruf besar, huruf kecil, angka, dan simbol.
+                    </p>
                 </div>
 
                 <div>
