@@ -3,9 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Course;
+use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Policies\CoursePolicy;
-use App\Models\User;
 use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;

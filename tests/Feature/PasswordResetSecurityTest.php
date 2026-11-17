@@ -20,6 +20,7 @@ class PasswordResetSecurityTest extends TestCase
     use RefreshDatabase;
 
     private const OLD_PASSWORD = 'PasswordStudent123!';
+
     private const NEW_PASSWORD = 'BrandNewPass456#';
 
     private User $student;

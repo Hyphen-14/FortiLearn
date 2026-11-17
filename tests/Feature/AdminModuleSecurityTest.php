@@ -19,10 +19,15 @@ class AdminModuleSecurityTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private User $otherAdmin;
+
     private User $instructor;
+
     private User $student;
+
     private Course $pending;
+
     private Course $draft;
 
     protected function setUp(): void

@@ -18,6 +18,7 @@ class AuthSecurityTest extends TestCase
     private const PASSWORD = 'PasswordStudent123!';
 
     private User $student;
+
     private User $other;
 
     protected function setUp(): void
