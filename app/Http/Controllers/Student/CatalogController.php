@@ -134,9 +134,15 @@ class CatalogController extends Controller
                 || $course->instructor_id === auth()->id();
         }
 
+        $ratingCount = $course->reviews()->count();
+
         return view('catalog.show', [
             'course' => $course,
             'isEnrolled' => $isEnrolled,
+            'reviews' => $course->reviews()->with('user:id,name')->latest()->limit(20)->get(),
+            'ratingCount' => $ratingCount,
+            'ratingAvg' => $ratingCount ? round((float) $course->reviews()->avg('rating'), 1) : null,
+            'myReview' => auth()->check() ? $course->reviews()->where('user_id', auth()->id())->first() : null,
         ]);
     }
 }

@@ -3,11 +3,15 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CourseThumbnailController;
 use App\Http\Controllers\Instructor\CourseController as InstructorCourseController;
+use App\Http\Controllers\Instructor\DashboardController as InstructorDashboardController;
+use App\Http\Controllers\Instructor\ReviewController as InstructorReviewController;
+use App\Http\Controllers\Instructor\SalesController as InstructorSalesController;
 use App\Http\Controllers\Instructor\LessonController as InstructorLessonController;
 use App\Http\Controllers\Instructor\SectionController as InstructorSectionController;
 use App\Http\Controllers\LessonStreamController;
 use App\Http\Controllers\Student\CatalogController;
 use App\Http\Controllers\Student\CheckoutController;
+use App\Http\Controllers\Student\ReviewController as StudentReviewController;
 use App\Http\Controllers\Student\TransactionController;
 use App\Http\Controllers\Student\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -54,8 +58,8 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// 3. Student Authenticated Routes (Jobdesk 3)
-Route::middleware(['auth'])->group(function () {
+// 3. Student Authenticated Routes (Jobdesk 3) - RBAC: student only (instructors/admins use their own workspaces)
+Route::middleware(['auth', 'role:student'])->group(function () {
     // Wallet Management & Simulation
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
     Route::post('/wallet/topup', [WalletController::class, 'topUp'])->name('wallet.topup');
@@ -67,6 +71,12 @@ Route::middleware(['auth'])->group(function () {
     // Transactions History & IDOR-Protected Invoices
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+
+    // Course reviews (enrolled students only; enforced again inside the controller)
+    Route::post('/courses/{course}/reviews', [StudentReviewController::class, 'store'])
+        ->whereNumber('course')->middleware('throttle:10,1')->name('reviews.store');
+    Route::delete('/courses/{course}/reviews', [StudentReviewController::class, 'destroy'])
+        ->whereNumber('course')->name('reviews.destroy');
 });
 
 // 4. Admin Protected Routes (Role: admin)
@@ -84,6 +94,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // 5. Instructor Module (Jobdesk 2 & 4) - RBAC: instructor only; every record is additionally checked by CoursePolicy
 Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('instructor.')->group(function () {
+    Route::get('/', fn () => redirect()->route('instructor.dashboard'));
+    Route::get('/dashboard', [InstructorDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/students', [InstructorSalesController::class, 'index'])->name('sales.index');
+    Route::get('/reviews', [InstructorReviewController::class, 'index'])->name('reviews.index');
+
     Route::get('/courses', [InstructorCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/create', [InstructorCourseController::class, 'create'])->name('courses.create');
     Route::post('/courses', [InstructorCourseController::class, 'store'])->middleware('throttle:20,1')->name('courses.store');

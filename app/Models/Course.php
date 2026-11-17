@@ -46,4 +46,14 @@ class Course extends Model
     {
         return $this->hasMany(Enrollment::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function purchases()
+    {
+        return $this->hasMany(WalletTransaction::class)->where('type', 'purchase')->where('status', 'completed');
+    }
 }

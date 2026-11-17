@@ -298,6 +298,8 @@
                 @endforelse
             </div>
         </section>
+
+        @include('catalog._reviews')
     </div>
 
     <!-- Right Column: Sticky Purchase & Benefits Card (4 Cols) -->

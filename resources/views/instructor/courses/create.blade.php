@@ -1,11 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.instructor')
 
 @section('title', 'Buat Course Baru')
 
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6">
     <div class="border-b border-slate-200 pb-5">
-        <a href="{{ route('instructor.courses.index') }}" class="text-xs font-bold text-emerald-700 hover:underline">&larr; Kembali ke Studio</a>
+        <a href="{{ route('instructor.courses.index') }}" class="text-xs font-bold text-emerald-700 hover:underline">&larr; Kembali ke Kursus Saya</a>
         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mt-2">Buat Course Baru</h1>
         <p class="text-slate-600 text-sm mt-1">Course dibuat sebagai <strong>draft</strong>. Setelah materi lengkap, ajukan ke admin untuk dipublikasikan.</p>
     </div>

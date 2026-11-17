@@ -44,7 +44,10 @@ class AuthController extends Controller
                 return back()->withErrors(['email' => 'Akun dinonaktifkan oleh administrator.']);
             }
 
-            return redirect()->intended(route('catalog.index'))
+            // Role-aware landing: instructors start in their own workspace.
+            $home = Auth::user()->isInstructor() ? route('instructor.dashboard') : route('catalog.index');
+
+            return redirect()->intended($home)
                 ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
         }
 

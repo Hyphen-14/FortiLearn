@@ -238,7 +238,7 @@
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Instruktur
                         </span>
-                        <a href="{{ route('instructor.courses.index') }}"
+                        <a href="{{ route('instructor.dashboard') }}"
                            class="relative group min-h-[42px] flex items-center justify-center xl:justify-start gap-3 px-3 py-2 rounded-xl text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 {{ request()->routeIs('instructor.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80' }}"
                            title="Studio Instruktur">
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -249,7 +249,8 @@
                     </div>
                     @endif
 
-                    <!-- GROUP 2: DOMPET & PEMBELIAN -->
+                    <!-- GROUP 2: DOMPET & PEMBELIAN (students & guests only; staff roles have no wallet) -->
+                    @if(! auth()->check() || auth()->user()->isStudent())
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Dompet &amp; Pembelian
@@ -288,6 +289,7 @@
                             </span>
                         </a>
                     </div>
+                    @endif
 
                     <!-- GROUP 3: PUSAT LAYANAN -->
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
@@ -316,6 +318,7 @@
             <!-- Bottom Section: Mini Wallet / Account Status Card + Auth Action -->
             <div class="hidden lg:flex flex-col gap-3 pt-4 border-t border-slate-100">
                 @auth
+                    @if(auth()->user()->isStudent())
                     <div class="hidden xl:block p-3.5 rounded-xl bg-[#090D16] text-white border border-slate-800 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Saldo Dompet</span>
@@ -329,6 +332,7 @@
                             + Isi Saldo Cepat
                         </a>
                     </div>
+                    @endif
 
                     <form action="{{ route('logout') }}" method="POST" class="w-full">
                         @csrf
@@ -410,6 +414,7 @@
                     <!-- Right Actions: Wallet Chip & User Profile -->
                     <div class="flex items-center gap-3 shrink-0">
                         @auth
+                            @if(auth()->user()->isStudent())
                             <a href="{{ route('wallet.index') }}"
                                class="min-h-[44px] inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-[#090D16] hover:bg-slate-800 text-white rounded-xl border border-slate-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                                title="Dompet Belajar Anda - Klik untuk Top-Up">
@@ -422,6 +427,7 @@
                                 </div>
                                 <span class="hidden sm:inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold">+</span>
                             </a>
+                            @endif
 
                             <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
                                 <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
