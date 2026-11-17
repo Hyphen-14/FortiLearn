@@ -76,11 +76,37 @@ class FileUploadService
             throw new InvalidArgumentException("Ukuran file melebihi batas maksimum {$limitMb}MB.");
         }
 
-        // 2. Magic bytes inspection (never trust getClientOriginalExtension / getClientMimeType)
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $realMime = $finfo ? finfo_file($finfo, $file->getRealPath()) : false;
-        if ($finfo) {
+        // 2. Prevent Dangerous Extensions & Script Masquerading
+        $clientExt = strtolower($file->getClientOriginalExtension());
+        $dangerousExtensions = ['php', 'php3', 'php4', 'php5', 'phtml', 'phar', 'sh', 'exe', 'bat', 'pl', 'py', 'cgi'];
+        if (in_array($clientExt, $dangerousExtensions, true)) {
+            throw new InvalidArgumentException('Ekstensi file berbahaya terdeteksi dan diblokir.');
+        }
+
+        // 3. Strict Magic Bytes Inspection using finfo (never trust client-supplied MIME or extension)
+        $realMime = null;
+        $filePath = $file->getRealPath();
+        if ($filePath && file_exists($filePath)) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $detected = @finfo_file($finfo, $filePath);
             finfo_close($finfo);
+            if ($detected !== false) {
+                $realMime = $detected;
+            }
+        }
+
+        if (! $realMime && $filePath && file_exists($filePath)) {
+            $headerBytes = @file_get_contents($filePath, false, null, 0, 4096);
+            if ($headerBytes !== false && $headerBytes !== '') {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $realMime = finfo_buffer($finfo, $headerBytes);
+                finfo_close($finfo);
+            }
+        }
+
+        if (! $realMime) {
+            $realMime = $file->getMimeType();
+        }
         }
 
         if ($realMime === false || ! array_key_exists($realMime, self::ALLOWED_MIME_TYPES)) {
@@ -99,8 +125,21 @@ class FileUploadService
             throw new InvalidArgumentException($messages[$expectedType]);
         }
 
-        // 4. Scan the WHOLE file for embedded script / webshell signatures
-        if ($this->containsForbiddenSignature($file->getRealPath())) {
+        // 4. Scan for embedded script / webshell signatures (header check + full streaming scan)
+        $fileHeader = ($filePath && file_exists($filePath)) ? @file_get_contents($filePath, false, null, 0, 2048) : '';
+        if ($fileHeader === false && method_exists($file, 'getContent')) {
+            try {
+                $fileHeader = substr($file->getContent(), 0, 2048);
+            } catch (\Throwable) {
+                $fileHeader = '';
+            }
+        }
+
+        if ($fileHeader && (str_contains($fileHeader, '<?php') || str_contains($fileHeader, '<?=') || str_contains($fileHeader, '<script'))) {
+            throw new InvalidArgumentException('File mengandung signature kode berbahaya (Webshell/Script injection dicegah).');
+        }
+
+        if ($filePath && file_exists($filePath) && $this->containsForbiddenSignature($filePath)) {
             throw new InvalidArgumentException('File mengandung signature kode berbahaya (Webshell/Script injection dicegah).');
         }
 

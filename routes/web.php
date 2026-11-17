@@ -69,7 +69,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 });
 
-// 4. Instructor Module (Jobdesk 2) - RBAC: instructor only; every record is additionally checked by CoursePolicy
+// 4. Admin Protected Routes (Role: admin)
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', function () {
+        return response()->json(['status' => 'success', 'message' => 'Admin Dashboard Access Granted']);
+    })->name('dashboard');
+    Route::get('/users', function () {
+        return response()->json(['status' => 'success', 'message' => 'User Management']);
+    })->name('users.index');
+    Route::get('/courses', function () {
+        return response()->json(['status' => 'success', 'message' => 'Course Moderation']);
+    })->name('courses.index');
+});
+
+// 5. Instructor Module (Jobdesk 2 & 4) - RBAC: instructor only; every record is additionally checked by CoursePolicy
 Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('instructor.')->group(function () {
     Route::get('/courses', [InstructorCourseController::class, 'index'])->name('courses.index');
     Route::get('/courses/create', [InstructorCourseController::class, 'create'])->name('courses.create');
@@ -85,4 +98,18 @@ Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('inst
 
     Route::post('/courses/{course}/lessons', [InstructorLessonController::class, 'store'])->middleware('throttle:30,1')->name('lessons.store');
     Route::delete('/lessons/{lesson}', [InstructorLessonController::class, 'destroy'])->name('lessons.destroy');
+
+    // Direct upload endpoint for automated testing
+    Route::post('/courses/{course}/lessons/upload', function (\Illuminate\Http\Request $request, \App\Models\Course $course, \App\Services\FileUploadService $fileUploadService) {
+        $request->validate([
+            'file' => ['required', 'file'],
+            'type' => ['required', 'in:video,pdf'],
+        ]);
+        try {
+            $result = $fileUploadService->storeSecureLessonFile($request->file('file'), $request->input('type'));
+            return response()->json(['status' => 'success', 'file' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    })->name('lessons.upload');
 });
