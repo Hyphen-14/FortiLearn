@@ -1,4 +1,4 @@
-# 🛡️ SecureAcademy — Secure E-Learning Web Application
+# 🛡️ FortiLearn — Modern & Secure E-Learning Platform
 > **AOL Group Project — COMP6695001 Secure Programming**  
 > **School of Computer Science (SOCS) — Cyber Security Program, BINUS University**  
 > *Target Evaluasi: White-Box Code Review & Peer Penetration Testing (Sesi 10)*
@@ -6,7 +6,9 @@
 ---
 
 ## 📌 1. Gambaran Umum Proyek
-**SecureAcademy** adalah platform pembelajaran daring (*e-learning / Udemy clone*) yang dirancang khusus dengan metodologi **Secure Software Engineering**. Seluruh fitur dibangun dengan prinsip *Defense in Depth* agar tahan terhadap audit *white-box code review* dan simulasi serangan siber dari kelompok penilai pada Sesi 10 perkuliahan.
+**FortiLearn** adalah platform pembelajaran daring (*e-learning marketplace & student academy*) modern multi-kategori (Pemrograman Web, Cloud & Backend, UI/UX Design, Data & AI, Bisnis Digital, dan Keamanan Siber) yang dirancang khusus dengan metodologi **Secure Software Engineering**. Seluruh fitur dibangun dengan prinsip *Defense in Depth* agar tahan terhadap audit *white-box code review* dan simulasi serangan siber dari kelompok penilai pada Sesi 10 perkuliahan.
+
+Platform ini mengusung antarmuka **3-Zone Dashboard** (Sidebar Navigasi, Katalog & Pembelajaran, serta Statistik Belajar & Dompet) yang dinamis, bersih dari *AI slop*, dilengkapi pemutar kelas video HD interaktif, viewer materi PDF resmi, sistem virtual wallet anti-race condition, serta 7 rute navigasi mandiri.
 
 ### Celah Kritis yang Dimatikan Sejak Desain Awal:
 1. **Remote Code Execution (RCE) via File Upload:** Mencegah upload webshell/script backdoor oleh pengajar melalui inspeksi Magic Bytes (`finfo`), pengacakan nama file (UUID), dan penyimpanan terisolasi di luar direktori web (`storage/app/private/`).
@@ -141,8 +143,8 @@ Semua anggota tim **WAJIB** mematuhi panduan ini saat menulis kode agar tidak me
 
 1. **Clone Repositori:**
    ```bash
-   git clone <URL_REPOSITORY_GITHUB>
-   cd Aol
+   git clone https://github.com/Hyphen-14/FortiLearn.git
+   cd FortiLearn
    ```
 
 2. **Salin File Konfigurasi Environment:**
@@ -198,10 +200,17 @@ Setelah menjalankan `php artisan migrate --seed`, akun berikut siap digunakan un
 
 Untuk memverifikasi bahwa pertahanan keamanan aktif dan bekerja:
 ```bash
+# Pengujian Keamanan Transaksi, Anti-Race Condition, Anti-Price Tampering, Anti-IDOR Streaming, & Rute
+php artisan test --filter=StudentCheckoutSecurityTest
+
+# Pengujian Fondasi Arsitektur Keamanan (Mass Assignment, Magic Bytes, Webshell Defense)
 php artisan test --filter=SecurityArchitectureTest
 ```
 
 Test suite ini memverifikasi:
+- ✅ **Anti-Race Condition & Concurrency Defense:** Transaksi saldo menggunakan `lockForUpdate()` dalam transaksi atomik.
+- ✅ **Anti-Price Tampering:** Parameter harga dari klien diabaikan secara mutlak dan diverifikasi dari database server.
+- ✅ **Anti-IDOR on Invoices & Lesson Media:** Siswa tidak dapat mengakses invoice atau streaming media/PDF modul berbayar milik kursus/siswa lain tanpa hak akses.
 - ✅ **Mass Assignment Defense:** Percobaan menyuntikkan `role=admin` dan saldo via payload request otomatis digagalkan.
 - ✅ **Webshell & Magic Bytes Inspection:** Percobaan upload file berbahaya (skrip PHP bertopeng video) otomatis ditolak dan menghasilkan exception.
 - ✅ **Balance Protection:** Pembelian dengan saldo tidak mencukupi otomatis digagalkan dan di-rollback.
