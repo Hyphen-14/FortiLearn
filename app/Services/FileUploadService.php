@@ -65,15 +65,18 @@ class FileUploadService
             throw new InvalidArgumentException('File upload gagal atau korup.');
         }
 
-        // 1. Size validation (server-side, based on the real size on disk)
+        // 1. Size validation (server-side, checks both file size and disk footprint)
+        $clientReportedSize = (int) $file->getSize();
         $realSize = filesize($file->getRealPath());
         $maxSize = $expectedType === 'video' ? self::MAX_VIDEO_SIZE : self::MAX_DOC_SIZE;
-        if ($realSize === false || $realSize <= 0) {
-            throw new InvalidArgumentException('File kosong tidak diperbolehkan.');
+        $limitMb = (int) ($maxSize / 1048576);
+
+        if ($clientReportedSize > $maxSize || ($realSize !== false && $realSize > $maxSize)) {
+            throw new InvalidArgumentException("Ukuran file melebihi batas maksimum yang diizinkan. (Maksimal {$limitMb}MB)");
         }
-        if ($realSize > $maxSize) {
-            $limitMb = (int) ($maxSize / 1048576);
-            throw new InvalidArgumentException("Ukuran file melebihi batas maksimum {$limitMb}MB.");
+
+        if (($realSize === 0 && $clientReportedSize === 0) || ($realSize === false && $clientReportedSize <= 0)) {
+            throw new InvalidArgumentException('File kosong tidak diperbolehkan.');
         }
 
         // 2. Prevent Dangerous Extensions & Script Masquerading
@@ -106,7 +109,6 @@ class FileUploadService
 
         if (! $realMime) {
             $realMime = $file->getMimeType();
-        }
         }
 
         if ($realMime === false || ! array_key_exists($realMime, self::ALLOWED_MIME_TYPES)) {
