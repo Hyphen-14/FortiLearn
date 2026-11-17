@@ -44,6 +44,14 @@ class CoursePolicy
     }
 
     /**
+     * Approve or reject courses waiting for review. Instructors can never moderate, including their own course.
+     */
+    public function moderate(User $user): bool
+    {
+        return $user->isAdmin() && $user->is_active;
+    }
+
+    /**
      * Determine whether the user can delete the course.
      */
     public function delete(User $user, Course $course): bool

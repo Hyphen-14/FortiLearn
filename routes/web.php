@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
+use App\Http\Controllers\Admin\CourseModerationController as AdminCourseController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\CourseThumbnailController;
@@ -79,16 +83,20 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // 4. Admin Protected Routes (Role: admin)
+// RoleMiddleware gates the whole group; each write action is checked again by a Policy (defense in depth)
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        return response()->json(['status' => 'success', 'message' => 'Admin Dashboard Access Granted']);
-    })->name('dashboard');
-    Route::get('/users', function () {
-        return response()->json(['status' => 'success', 'message' => 'User Management']);
-    })->name('users.index');
-    Route::get('/courses', function () {
-        return response()->json(['status' => 'success', 'message' => 'Course Moderation']);
-    })->name('courses.index');
+    Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
+
+    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+    Route::patch('/users/{user}/deactivate', [AdminUserController::class, 'deactivate'])->name('users.deactivate');
+    Route::patch('/users/{user}/activate', [AdminUserController::class, 'activate'])->name('users.activate');
+
+    Route::get('/courses', [AdminCourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{course}', [AdminCourseController::class, 'show'])->whereNumber('course')->name('courses.show');
+    Route::patch('/courses/{course}/approve', [AdminCourseController::class, 'approve'])->whereNumber('course')->name('courses.approve');
+    Route::patch('/courses/{course}/reject', [AdminCourseController::class, 'reject'])->whereNumber('course')->name('courses.reject');
+
+    Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
 });
 
 // 5. Instructor Module (Jobdesk 2 & 4) - RBAC: instructor only; every record is additionally checked by CoursePolicy

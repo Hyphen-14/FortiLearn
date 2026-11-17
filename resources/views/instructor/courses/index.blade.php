@@ -56,6 +56,11 @@
                             <span class="text-[11px] font-mono text-slate-500">{{ $course->category }}</span>
                         </div>
                         <h2 class="font-extrabold text-slate-900 leading-snug">{{ $course->title }}</h2>
+                        @if($course->status === 'rejected' && $course->rejection_reason)
+                            <p class="text-xs text-rose-800 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                                Alasan ditolak admin: {{ $course->rejection_reason }}
+                            </p>
+                        @endif
                         <div class="text-xs text-slate-500 flex items-center gap-3 mt-auto">
                             <span>{{ $course->lessons_count }} materi</span>
                             <span>{{ $course->enrollments_count }} siswa</span>

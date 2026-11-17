@@ -24,7 +24,13 @@ class Course extends Model
     {
         return [
             'price' => 'decimal:2',
+            'reviewed_at' => 'datetime',
         ];
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     public function instructor()

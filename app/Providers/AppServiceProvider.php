@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Models\Course;
 use App\Models\WalletTransaction;
 use App\Policies\CoursePolicy;
+use App\Models\User;
 use App\Policies\TransactionPolicy;
+use App\Policies\UserPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         // Explicit Security Policy Registration (Anti-IDOR)
         Gate::policy(Course::class, CoursePolicy::class);
         Gate::policy(WalletTransaction::class, TransactionPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
 
         // One password policy for register and reset. uncompromised() is left out on purpose:
         // it calls the external HIBP API, which the offline test suite and graders' machines may not reach.

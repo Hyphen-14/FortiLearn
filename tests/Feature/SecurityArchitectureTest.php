@@ -173,10 +173,7 @@ class SecurityArchitectureTest extends TestCase
 
         $response = $this->get('/admin/dashboard');
         $response->assertStatus(200);
-        $response->assertJson([
-            'status' => 'success',
-            'message' => 'Admin Dashboard Access Granted',
-        ]);
+        $response->assertSee('Ringkasan Admin');
     }
 
     // =========================================================================

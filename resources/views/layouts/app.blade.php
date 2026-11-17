@@ -249,6 +249,32 @@
                     </div>
                     @endif
 
+                    @if(auth()->check() && auth()->user()->isAdmin())
+                    <!-- GROUP: ADMIN (Jobdesk 1) -->
+                    <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
+                        <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
+                            Admin
+                        </span>
+                        @foreach([
+                            ['admin.dashboard', 'admin.dashboard', 'Ringkasan Admin', 'M4 6h16M4 12h10M4 18h7'],
+                            ['admin.users.index', 'admin.users.*', 'Kelola Pengguna', 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z'],
+                            ['admin.courses.index', 'admin.courses.*', 'Moderasi Course', 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
+                            ['admin.audit-logs.index', 'admin.audit-logs.*', 'Audit Log', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01'],
+                        ] as [$adminRoute, $adminPattern, $adminLabel, $adminIcon])
+                            <a href="{{ route($adminRoute) }}"
+                               @if(request()->routeIs($adminPattern)) aria-current="page" @endif
+                               class="relative group min-h-[42px] flex items-center justify-center xl:justify-start gap-3 px-3 py-2 rounded-xl text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 {{ request()->routeIs($adminPattern) ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80' }}"
+                               title="{{ $adminLabel }}">
+                                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $adminIcon }}"/>
+                                </svg>
+                                <span class="hidden xl:inline">{{ $adminLabel }}</span>
+                                <span class="sr-only xl:hidden">{{ $adminLabel }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                    @endif
+
                     <!-- GROUP 2: DOMPET & PEMBELIAN -->
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
