@@ -10,12 +10,15 @@ use Illuminate\Http\Request;
  */
 class Audit
 {
-    public static function record(string $eventType, ?Request $request = null, array $payload = []): void
+    /**
+     * @param  int|null  $userId  set when the event concerns a user who is not logged in (e.g. password reset)
+     */
+    public static function record(string $eventType, ?Request $request = null, array $payload = [], ?int $userId = null): void
     {
         $request ??= request();
 
         AuditLog::create([
-            'user_id' => $request->user()?->id,
+            'user_id' => $userId ?? $request->user()?->id,
             'event_type' => $eventType,
             'ip_address' => $request->ip() ?? '0.0.0.0',
             'user_agent' => substr((string) $request->userAgent(), 0, 500),

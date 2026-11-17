@@ -16,6 +16,12 @@
         </div>
 
         <div class="p-6 md:p-8">
+            @if (session('status'))
+                <div role="status" class="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm">
+                    {{ session('status') }}
+                </div>
+            @endif
+
             <form id="login-form" action="{{ route('login') }}" method="POST" class="space-y-4">
                 @csrf
 
@@ -55,6 +61,9 @@
                                class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600">
                         <span>Ingat saya di perangkat ini</span>
                     </label>
+                    <a href="{{ route('password.request') }}" class="inline-flex items-center min-h-[36px] font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
+                        Lupa kata sandi?
+                    </a>
                 </div>
 
                 <button type="submit"
