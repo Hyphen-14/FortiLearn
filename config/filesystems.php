@@ -33,7 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false, // Private disk must never expose an HTTP route (anti file-disclosure)
             'throw' => false,
             'report' => false,
         ],

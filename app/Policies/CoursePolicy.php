@@ -28,6 +28,14 @@ class CoursePolicy
     }
 
     /**
+     * Only active instructors (or admins) may create courses.
+     */
+    public function create(User $user): bool
+    {
+        return $user->is_active && ($user->isInstructor() || $user->isAdmin());
+    }
+
+    /**
      * Determine whether the user can update the course.
      */
     public function update(User $user, Course $course): bool

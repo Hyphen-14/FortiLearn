@@ -7,11 +7,21 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
+/**
+ * Secure upload pipeline for instructor course material (Jobdesk 2).
+ *
+ * Defence layers (in order):
+ *  1. Size limit per type            -> anti-DoS / disk exhaustion
+ *  2. Magic-bytes via finfo          -> anti MIME-spoofing (extension & client MIME are ignored)
+ *  3. Type must match the slot       -> a PDF cannot be uploaded as "video"
+ *  4. Whole-file signature scan      -> rejects "<?php", "<?=" and "<script" anywhere in the file (polyglots)
+ *  5. Image re-validation            -> getimagesize() must succeed for thumbnails
+ *  6. UUID v4 filename               -> anti path-traversal / file guessing
+ *  7. Private disk only              -> storage/app/private/courses (never public/, never symlinked)
+ */
 class FileUploadService
 {
-    /**
-     * Allowed MIME types and their validated extensions.
-     */
+    /** Allowed real MIME types => canonical extension. */
     private const ALLOWED_MIME_TYPES = [
         'video/mp4' => 'mp4',
         'application/pdf' => 'pdf',
@@ -19,70 +29,173 @@ class FileUploadService
         'image/png' => 'png',
     ];
 
-    /**
-     * Maximum allowed file sizes in bytes (e.g. 50MB for video, 10MB for pdf).
-     */
+    /** Which extension(s) are acceptable for each upload slot. */
+    private const SLOT_EXTENSIONS = [
+        'video' => ['mp4'],
+        'pdf' => ['pdf'],
+        'image' => ['jpg', 'png'],
+    ];
+
     private const MAX_VIDEO_SIZE = 52428800; // 50MB
-    private const MAX_DOC_SIZE = 10485760;   // 10MB
+    private const MAX_DOC_SIZE = 10485760;   // 10MB (PDF & images)
+
+    /** Disk-relative directory (disk "local" root is storage/app/private). */
+    private const DISK_DIR = 'courses';
+
+    /** Prefix kept in the database column for readability / backwards compatibility. */
+    private const DB_PREFIX = 'private/';
+
+    private const FORBIDDEN_SIGNATURES = ['<?php', '<?=', '<script'];
 
     /**
-     * Inspect file magic bytes, validate size, sanitize name, and store in private storage.
+     * Validate and store an uploaded file.
+     *
+     * @param  string  $expectedType  one of: video | pdf | image
+     * @return array{file_path:string, original_filename:string, mime_type:string, extension:string}
      *
      * @throws InvalidArgumentException
      */
     public function storeSecureLessonFile(UploadedFile $file, string $expectedType): array
     {
-        if (! $file->isValid()) {
+        if (! isset(self::SLOT_EXTENSIONS[$expectedType])) {
+            throw new InvalidArgumentException('Jenis unggahan tidak dikenal.');
+        }
+
+        if (! $file->isValid() || ! is_file($file->getRealPath())) {
             throw new InvalidArgumentException('File upload gagal atau korup.');
         }
 
-        // 1. Size Validation
-        $maxSize = ($expectedType === 'video') ? self::MAX_VIDEO_SIZE : self::MAX_DOC_SIZE;
-        if ($file->getSize() > $maxSize) {
-            throw new InvalidArgumentException('Ukuran file melebihi batas maksimum yang diizinkan.');
+        // 1. Size validation (server-side, based on the real size on disk)
+        $realSize = filesize($file->getRealPath());
+        $maxSize = $expectedType === 'video' ? self::MAX_VIDEO_SIZE : self::MAX_DOC_SIZE;
+        if ($realSize === false || $realSize <= 0) {
+            throw new InvalidArgumentException('File kosong tidak diperbolehkan.');
+        }
+        if ($realSize > $maxSize) {
+            $limitMb = (int) ($maxSize / 1048576);
+            throw new InvalidArgumentException("Ukuran file melebihi batas maksimum {$limitMb}MB.");
         }
 
-        // 2. Strict Magic Bytes Inspection using finfo
+        // 2. Magic bytes inspection (never trust getClientOriginalExtension / getClientMimeType)
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $realMime = finfo_file($finfo, $file->getRealPath());
-        finfo_close($finfo);
+        $realMime = $finfo ? finfo_file($finfo, $file->getRealPath()) : false;
+        if ($finfo) {
+            finfo_close($finfo);
+        }
 
-        if (! array_key_exists($realMime, self::ALLOWED_MIME_TYPES)) {
-            throw new InvalidArgumentException("Tipe MIME ($realMime) tidak diizinkan. Hanya MP4, PDF, JPG, PNG.");
+        if ($realMime === false || ! array_key_exists($realMime, self::ALLOWED_MIME_TYPES)) {
+            throw new InvalidArgumentException('Tipe file tidak diizinkan. Hanya MP4, PDF, JPG, PNG yang valid.');
         }
 
         $validatedExtension = self::ALLOWED_MIME_TYPES[$realMime];
 
-        // Ensure expected type matches detected MIME
-        if ($expectedType === 'video' && $validatedExtension !== 'mp4') {
-            throw new InvalidArgumentException('Materi video harus berformat MP4 yang valid.');
-        }
-        if ($expectedType === 'pdf' && $validatedExtension !== 'pdf') {
-            throw new InvalidArgumentException('Materi dokumen harus berformat PDF yang valid.');
+        // 3. Detected type must match the requested slot
+        if (! in_array($validatedExtension, self::SLOT_EXTENSIONS[$expectedType], true)) {
+            $messages = [
+                'video' => 'Materi video harus berformat MP4 yang valid.',
+                'pdf' => 'Materi dokumen harus berformat PDF yang valid.',
+                'image' => 'Thumbnail harus berformat JPG atau PNG yang valid.',
+            ];
+            throw new InvalidArgumentException($messages[$expectedType]);
         }
 
-        // 3. Prevent Embedded Executables / Webshell Payload Inspection
-        $fileHeader = file_get_contents($file->getRealPath(), false, null, 0, 1024);
-        if (str_contains($fileHeader, '<?php') || str_contains($fileHeader, '<?=') || str_contains($fileHeader, '<script')) {
+        // 4. Scan the WHOLE file for embedded script / webshell signatures
+        if ($this->containsForbiddenSignature($file->getRealPath())) {
             throw new InvalidArgumentException('File mengandung signature kode berbahaya (Webshell/Script injection dicegah).');
         }
 
-        // 4. Random UUID Filename (mencegah path traversal dan direct guess attack)
+        // 5. Images must be decodable as real images
+        if ($expectedType === 'image' && @getimagesize($file->getRealPath()) === false) {
+            throw new InvalidArgumentException('Thumbnail bukan gambar yang valid.');
+        }
+
+        // 6. Random UUID filename — the client-supplied name never touches the filesystem
         $secureFilename = Str::uuid()->toString() . '.' . $validatedExtension;
 
-        // 5. Store in private directory (NEVER inside public/ folder)
-        $storagePath = 'private/courses/' . $secureFilename;
-        Storage::disk('local')->putFileAs('private/courses', $file, $secureFilename);
-
-        // Sanitize original filename for display
-        $originalName = preg_replace('/[^a-zA-Z0-9_\-\. ]/', '', $file->getClientOriginalName());
+        // 7. Private storage: storage/app/private/courses/<uuid>.<ext>
+        Storage::disk('local')->putFileAs(self::DISK_DIR, $file, $secureFilename);
 
         return [
-            'file_path' => $storagePath,
-            'original_filename' => $originalName,
+            'file_path' => self::DB_PREFIX . self::DISK_DIR . '/' . $secureFilename,
+            'original_filename' => $this->sanitizeDisplayName($file->getClientOriginalName(), $validatedExtension),
             'mime_type' => $realMime,
             'extension' => $validatedExtension,
         ];
     }
-}
 
+    /**
+     * Delete a previously stored file. Only paths inside private/courses/ with a UUID name are honoured,
+     * so a tampered DB value can never delete arbitrary files.
+     */
+    public function delete(?string $dbPath): void
+    {
+        $diskPath = self::toDiskPath($dbPath);
+        if ($diskPath !== null && Storage::disk('local')->exists($diskPath)) {
+            Storage::disk('local')->delete($diskPath);
+        }
+    }
+
+    /**
+     * Convert a DB path (private/courses/<uuid>.ext) to a disk-relative path, or null when the
+     * value is not an upload produced by this service (e.g. seeded sample media).
+     */
+    public static function toDiskPath(?string $dbPath): ?string
+    {
+        if ($dbPath === null || $dbPath === '') {
+            return null;
+        }
+
+        $pattern = '#^private/courses/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(mp4|pdf|jpg|png)$#';
+        if (! preg_match($pattern, $dbPath)) {
+            return null;
+        }
+
+        return substr($dbPath, strlen(self::DB_PREFIX));
+    }
+
+    /**
+     * Stream-scan a file in chunks (with overlap) so signatures split across chunk borders are still caught.
+     */
+    private function containsForbiddenSignature(string $path): bool
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return true; // fail closed
+        }
+
+        $overlap = max(array_map('strlen', self::FORBIDDEN_SIGNATURES)) - 1;
+        $carry = '';
+
+        try {
+            while (! feof($handle)) {
+                $chunk = fread($handle, 1048576);
+                if ($chunk === false) {
+                    return true;
+                }
+                $buffer = strtolower($carry . $chunk);
+                foreach (self::FORBIDDEN_SIGNATURES as $signature) {
+                    if (str_contains($buffer, $signature)) {
+                        return true;
+                    }
+                }
+                $carry = substr($buffer, -$overlap);
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return false;
+    }
+
+    /**
+     * Name used only for display (never for storage). Strips path parts and unsafe characters.
+     */
+    private function sanitizeDisplayName(string $clientName, string $extension): string
+    {
+        $base = pathinfo(basename(str_replace('\\', '/', $clientName)), PATHINFO_FILENAME);
+        $base = preg_replace('/[^a-zA-Z0-9_\- ]/', '', $base) ?? '';
+        $base = trim(Str::limit($base, 80, ''));
+
+        return ($base !== '' ? $base : 'materi') . '.' . $extension;
+    }
+}

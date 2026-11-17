@@ -4,13 +4,8 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\Lesson;
-use App\Services\DummyMediaGenerator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CatalogController extends Controller
 {
@@ -142,38 +137,6 @@ class CatalogController extends Controller
         return view('catalog.show', [
             'course' => $course,
             'isEnrolled' => $isEnrolled,
-        ]);
-    }
-
-    /**
-     * Stream or download a protected lesson file (PDF / MP4) from private storage.
-     * Security: Enforces CoursePolicy@viewContent to prevent unauthorized IDOR access.
-     */
-    public function streamLesson(Request $request, string $slug, Lesson $lesson): StreamedResponse
-    {
-        $course = Course::with('instructor')
-            ->where('slug', $slug)
-            ->where('status', 'published')
-            ->firstOrFail();
-
-        if ((int) $lesson->course_id !== (int) $course->id) {
-            abort(404);
-        }
-
-        // Strict Policy Check: Only enrolled students, course instructor, or admin can access
-        Gate::authorize('viewContent', $course);
-
-        $relativePath = DummyMediaGenerator::ensureLessonMediaExists($course, $lesson);
-        $disk = Storage::disk('local');
-
-        $mimeType = $lesson->content_type === 'pdf' ? 'application/pdf' : 'video/mp4';
-        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
-        $safeFilename = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', $lesson->original_filename ?: ('modul-' . $lesson->id . ($lesson->content_type === 'pdf' ? '.pdf' : '.mp4')));
-
-        return $disk->response($relativePath, $safeFilename, [
-            'Content-Type' => $mimeType,
-            'Content-Disposition' => $disposition . '; filename="' . $safeFilename . '"',
-            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 }
