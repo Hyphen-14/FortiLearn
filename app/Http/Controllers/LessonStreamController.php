@@ -49,8 +49,9 @@ class LessonStreamController extends Controller
         $user = $request->user();
         $isPrivileged = $user->isAdmin() || (int) $course->instructor_id === (int) $user->id;
 
-        // Unpublished courses are only visible to their instructor / admin.
-        if ($course->status !== 'published' && ! $isPrivileged) {
+        // Unpublished courses are only visible to their instructor / admin, plus enrolled students
+        // while an edit waits for re-review; lessons added after the last approval stay hidden.
+        if (! $isPrivileged && (! $course->isAccessibleBy($user) || ! $course->lessonIsReleasedTo($lesson, $user))) {
             abort(404);
         }
 

@@ -31,6 +31,13 @@
         @endif
     </div>
 
+    @if($course->status === 'published')
+        <p role="note" class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            Course ini sudah terbit. Menyimpan perubahan informasi, menambah materi, atau menambah/mengubah bab akan mengirim course kembali ke admin.
+            Selama menunggu, course tidak tampil di katalog. Siswa yang sudah membeli tetap bisa belajar dari materi yang sudah disetujui.
+        </p>
+    @endif
+
     <!-- 1. Metadata -->
     <section aria-labelledby="meta-heading" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs">
         <h2 id="meta-heading" class="text-base font-extrabold text-slate-900 mb-4">1. Informasi Course</h2>

@@ -36,6 +36,8 @@ class LessonController extends Controller
             return back()->withInput()->withErrors(['file' => $e->getMessage()]);
         }
 
+        $course->flagForReReview($request, 'lesson_added');
+
         $lesson = new Lesson([
             'title' => $data['title'],
             'lesson_order' => ($course->lessons()->max('lesson_order') ?? 0) + 1,

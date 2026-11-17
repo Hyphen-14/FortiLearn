@@ -34,7 +34,12 @@
                 @foreach($course->lessons as $lesson)
                     <li class="px-5 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                         <div class="min-w-0 flex-grow">
-                            <p class="font-bold text-slate-900">{{ $lesson->lesson_order }}. {{ $lesson->title }}</p>
+                            <p class="font-bold text-slate-900">
+                                {{ $lesson->lesson_order }}. {{ $lesson->title }}
+                                @if($course->approved_at && $lesson->created_at?->gt($course->approved_at))
+                                    <span class="ml-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-800 text-[11px] font-bold">Baru sejak terakhir disetujui</span>
+                                @endif
+                            </p>
                             <p class="text-xs text-slate-600">{{ strtoupper($lesson->content_type) }} · {{ $lesson->original_filename }}</p>
                         </div>
                         <a href="{{ route('lesson.stream', [$course->id, $lesson->id]) }}" target="_blank" rel="noopener"

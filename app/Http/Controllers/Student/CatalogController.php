@@ -84,10 +84,13 @@ class CatalogController extends Controller
 
         if (auth()->check()) {
             $enrolledCourseIds = auth()->user()->enrollments()->pluck('course_id');
+            // Paid courses stay listed while an instructor edit waits for re-review.
             $enrolledCourses = Course::with(['instructor', 'lessons'])
                 ->whereIn('id', $enrolledCourseIds)
-                ->where('status', 'published')
-                ->get();
+                ->whereIn('status', ['published', 'pending_approval', 'rejected'])
+                ->get()
+                ->filter(fn (Course $course) => $course->isAccessibleBy(auth()->user()))
+                ->values();
         }
 
         return view('catalog.my-courses', [
@@ -124,8 +127,14 @@ class CatalogController extends Controller
     {
         $course = Course::with(['instructor', 'lessons'])
             ->where('slug', $slug)
-            ->where('status', 'published')
             ->firstOrFail();
+
+        // Public: published only. Enrolled students also see a course waiting for re-review,
+        // but never the lessons added after its last approval.
+        abort_unless($course->isAccessibleBy(auth()->user()), 404);
+        $course->setRelation('lessons', $course->lessons->filter(
+            fn ($lesson) => $course->lessonIsReleasedTo($lesson, auth()->user())
+        )->values());
 
         $isEnrolled = false;
         if (auth()->check()) {

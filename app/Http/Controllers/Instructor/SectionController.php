@@ -19,6 +19,8 @@ class SectionController extends Controller
             'title' => ['required', 'string', 'min:3', 'max:150'],
         ]);
 
+        $course->flagForReReview($request, 'section_added');
+
         $section = new Section([
             'title' => $data['title'],
             'section_order' => ($course->sections()->max('section_order') ?? 0) + 1,
@@ -36,6 +38,7 @@ class SectionController extends Controller
             'title' => ['required', 'string', 'min:3', 'max:150'],
         ]);
 
+        $section->course->flagForReReview($request, 'section_renamed');
         $section->update(['title' => $data['title']]);
 
         return back()->with('success', 'Judul bab diperbarui.');

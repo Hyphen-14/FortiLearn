@@ -101,6 +101,9 @@ class CourseController extends Controller
             }
         }
 
+        $wasPublished = $course->status === 'published';
+        $course->flagForReReview($request, 'metadata');
+
         $course->fill([
             'title' => $data['title'],
             'category' => $data['category'],
@@ -115,7 +118,9 @@ class CourseController extends Controller
 
         $course->save();
 
-        return back()->with('success', 'Metadata course berhasil diperbarui.');
+        return back()->with('success', $wasPublished
+            ? 'Metadata diperbarui. Course dikirim ulang ke admin dan tidak tampil di katalog sampai disetujui lagi.'
+            : 'Metadata course berhasil diperbarui.');
     }
 
     /** Send a draft/rejected course to the admin for moderation. Instructors can never self-publish. */

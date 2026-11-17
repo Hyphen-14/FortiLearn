@@ -16,10 +16,7 @@ class CourseThumbnailController extends Controller
 {
     public function show(Request $request, Course $course): Response
     {
-        $user = $request->user();
-        $isPrivileged = $user && ($user->isAdmin() || (int) $course->instructor_id === (int) $user->id);
-
-        if ($course->status !== 'published' && ! $isPrivileged) {
+        if (! $course->isAccessibleBy($request->user())) {
             abort(404);
         }
 

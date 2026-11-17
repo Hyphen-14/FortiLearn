@@ -54,7 +54,7 @@ class CourseModerationController extends Controller
         Gate::authorize('moderate', Course::class);
 
         return $this->transition($request, $course, 'published', null, 'admin.course_approved',
-            "Course \"{$course->title}\" diterbitkan dan tampil di katalog.");
+            "Course \"{$course->title}\" diterbitkan dan tampil di katalog.", ['approved_at' => now()]);
     }
 
     public function reject(Request $request, Course $course): RedirectResponse
@@ -73,7 +73,7 @@ class CourseModerationController extends Controller
      * Conditional UPDATE ... WHERE status = 'pending_approval': the check and the write are one
      * atomic statement, so two admins (or a double-click) cannot both act on the same course.
      */
-    private function transition(Request $request, Course $course, string $to, ?string $reason, string $event, string $message): RedirectResponse
+    private function transition(Request $request, Course $course, string $to, ?string $reason, string $event, string $message, array $extra = []): RedirectResponse
     {
         $updated = Course::whereKey($course->id)
             ->where('status', 'pending_approval')
@@ -83,7 +83,7 @@ class CourseModerationController extends Controller
                 'reviewed_by' => $request->user()->id,
                 'reviewed_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ] + $extra);
 
         if ($updated === 0) {
             return back()->with('error', 'Course ini tidak sedang menunggu review, jadi tidak bisa diproses.');
