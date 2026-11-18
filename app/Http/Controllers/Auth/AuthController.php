@@ -14,7 +14,7 @@ use Illuminate\View\View;
 class AuthController extends Controller
 {
     /**
-     * Show login form.
+     * Show login form (students / general users).
      */
     public function showLogin(): View
     {
@@ -22,68 +22,142 @@ class AuthController extends Controller
     }
 
     /**
-     * Authenticate user with rate limiting and session fixation prevention.
+     * Show the dedicated instructor login form.
+     */
+    public function showInstructorLogin(): View
+    {
+        return view('auth.instructor-login');
+    }
+
+    /**
+     * Student / general login. Instructor accounts must use the instructor portal.
      */
     public function login(Request $request): RedirectResponse
+    {
+        return $this->authenticate($request, 'student');
+    }
+
+    /**
+     * Instructor-only login. Non-instructor credentials get the same generic error as a wrong password
+     * (no role enumeration).
+     */
+    public function loginInstructor(Request $request): RedirectResponse
+    {
+        return $this->authenticate($request, 'instructor');
+    }
+
+    /**
+     * Shared authentication flow with session fixation prevention.
+     * $portal is chosen by the route (server side), never by the client.
+     */
+    private function authenticate(Request $request, string $portal): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $remember = $request->boolean('remember');
-
-        if (Auth::attempt($credentials, $remember)) {
-            // Anti-Session Fixation: Always regenerate session ID upon privilege change/login
-            $request->session()->regenerate();
-
-            if (! Auth::user()->is_active) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return back()->withErrors(['email' => 'Akun dinonaktifkan oleh administrator.']);
-            }
-
-            // Role-aware landing: instructors start in their own workspace.
-            $home = Auth::user()->isInstructor() ? route('instructor.dashboard') : route('catalog.index');
-
-            return redirect()->intended($home)
-                ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
-        }
-
-        return back()->withErrors([
+        $failed = back()->withErrors([
             'email' => 'Kombinasi email atau password tidak sesuai.',
         ])->onlyInput('email');
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            return $failed;
+        }
+
+        $user = Auth::user();
+
+        $reject = function (string $message) use ($request) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors(['email' => $message])->onlyInput('email');
+        };
+
+        if ($portal === 'instructor' && ! $user->isInstructor()) {
+            return $reject('Kombinasi email atau password tidak sesuai.');
+        }
+
+        if ($portal === 'student' && $user->isInstructor()) {
+            return $reject('Akun instruktur masuk melalui halaman Login Instruktur.');
+        }
+
+        if (! $user->is_active) {
+            return $reject('Akun dinonaktifkan oleh administrator.');
+        }
+
+        // Anti-Session Fixation: always regenerate session ID upon login
+        $request->session()->regenerate();
+
+        $home = $user->isInstructor() ? route('instructor.dashboard') : route('catalog.index');
+
+        return redirect()->intended($home)
+            ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
     }
 
     /**
-     * Show registration form.
+     * Show student registration form.
      */
     public function showRegister(): View
     {
-        return view('auth.register');
+        return view('auth.register', ['accountType' => 'student']);
     }
 
     /**
-     * Register new student account with strict mass assignment protection.
+     * Show instructor registration form.
+     */
+    public function showRegisterInstructor(): View
+    {
+        return view('auth.register', ['accountType' => 'instructor']);
+    }
+
+    /**
+     * Register a new student account.
      */
     public function register(Request $request): RedirectResponse
     {
+        return $this->createAccount($request, 'student');
+    }
+
+    /**
+     * Register a new instructor account (separate endpoint; role is decided here, never by the client).
+     */
+    public function registerInstructor(Request $request): RedirectResponse
+    {
+        return $this->createAccount($request, 'instructor');
+    }
+
+    /**
+     * Shared registration flow. $role is a server-side constant chosen by the route:
+     * 'role' / 'balance' / 'is_active' in the request body are ignored (anti mass-assignment & privilege escalation).
+     * Only 'student' and 'instructor' can ever be self-registered; admin accounts are never created here.
+     */
+    private function createAccount(Request $request, string $role): RedirectResponse
+    {
+        abort_unless(in_array($role, ['student', 'instructor'], true), 403);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        // Security: role and balance are NEVER accepted from client request
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+        $user->role = $role; // not mass-assignable by design
+        $user->save();
 
         Auth::login($user);
         $request->session()->regenerate();
+
+        if ($role === 'instructor') {
+            return redirect()->route('instructor.dashboard')
+                ->with('success', 'Akun instruktur berhasil dibuat! Mulai dengan membuat kursus pertama Anda.');
+        }
 
         return redirect()->route('catalog.index')
             ->with('success', 'Pendaftaran akun berhasil! Selamat datang di FortiLearn.');

@@ -1,22 +1,30 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Akun Baru')
+@php
+    $isInstructor = ($accountType ?? 'student') === 'instructor';
+@endphp
+
+@section('title', $isInstructor ? 'Daftar Sebagai Instruktur' : 'Daftar Akun Baru')
 
 @section('content')
 <div class="max-w-md mx-auto my-4">
     <div class="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-2xs">
         <div class="p-6 bg-[#090D16] text-white border-b border-slate-800">
             <span class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                Mulai Perjalanan Belajar Anda
+                {{ $isInstructor ? 'Studio Instruktur FortiLearn' : 'Mulai Perjalanan Belajar Anda' }}
             </span>
-            <h1 class="text-xl font-extrabold text-white tracking-tight">Buat Akun FortiLearn</h1>
+            <h1 class="text-xl font-extrabold text-white tracking-tight">
+                {{ $isInstructor ? 'Daftar Sebagai Instruktur' : 'Buat Akun FortiLearn' }}
+            </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Daftar gratis untuk mengakses katalog kursus profesional dan fitur Dompet Belajar.
+                {{ $isInstructor
+                    ? 'Buat kursus, unggah materi video/PDF, dan pantau penjualan serta ulasan siswa dari dashboard studio Anda.'
+                    : 'Daftar gratis untuk mengakses katalog kursus profesional dan fitur Dompet Belajar.' }}
             </p>
         </div>
 
         <div class="p-6 md:p-8">
-            <form action="{{ route('register') }}" method="POST" class="space-y-4">
+            <form action="{{ $isInstructor ? route('register.instructor') : route('register') }}" method="POST" class="space-y-4">
                 @csrf
 
                 <div>
@@ -78,7 +86,7 @@
 
                 <button type="submit"
                         class="w-full min-h-[44px] py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
-                    Daftar Sekarang
+                    {{ $isInstructor ? 'Daftar Sebagai Instruktur' : 'Daftar Sekarang' }}
                 </button>
             </form>
 
@@ -87,6 +95,20 @@
                 <a href="{{ route('login') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
                     Masuk di sini
                 </a>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-100 text-center text-xs text-slate-600">
+                @if($isInstructor)
+                    Ingin belajar, bukan mengajar?
+                    <a href="{{ route('register') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
+                        Daftar sebagai siswa
+                    </a>
+                @else
+                    Ingin membuat dan menjual kursus?
+                    <a href="{{ route('register.instructor') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
+                        Daftar sebagai instruktur
+                    </a>
+                @endif
             </div>
         </div>
     </div>

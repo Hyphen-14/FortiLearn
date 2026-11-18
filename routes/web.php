@@ -52,8 +52,16 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 
+    // Dedicated instructor portal (separate from the student login)
+    Route::get('/instructor/login', [AuthController::class, 'showInstructorLogin'])->name('instructor.login');
+    Route::post('/instructor/login', [AuthController::class, 'loginInstructor'])->middleware('throttle:6,1');
+
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // Separate registration entry point for instructors (role assigned server-side)
+    Route::get('/register/instructor', [AuthController::class, 'showRegisterInstructor'])->name('register.instructor');
+    Route::post('/register/instructor', [AuthController::class, 'registerInstructor'])->middleware('throttle:6,1');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');

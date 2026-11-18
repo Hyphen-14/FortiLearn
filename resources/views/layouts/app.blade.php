@@ -355,6 +355,10 @@
                            class="w-full py-2 px-3 rounded-lg bg-[#090D16] hover:bg-emerald-600 text-white text-xs font-bold inline-flex items-center justify-center transition">
                             Masuk Akun
                         </a>
+                        <a href="{{ route('instructor.login') }}"
+                           class="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold inline-flex items-center justify-center transition">
+                            Login Instruktur
+                        </a>
                     </div>
 
                     <a href="{{ route('login') }}"
@@ -440,8 +444,23 @@
                             </div>
                         @else
                             <a href="{{ route('login') }}"
-                               class="min-h-[44px] inline-flex items-center px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition">
-                                Masuk
+                               class="min-h-[44px] min-w-[44px] sm:min-w-[9.5rem] inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-white bg-white hover:bg-[#090D16] border border-slate-300 hover:border-[#090D16] rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                               title="Masuk sebagai Siswa">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Login Siswa</span>
+                                <span class="sm:hidden">Siswa</span>
+                            </a>
+                            <a href="{{ route('instructor.login') }}"
+                               class="min-h-[44px] min-w-[44px] sm:min-w-[9.5rem] inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-white bg-white hover:bg-[#090D16] border border-slate-300 hover:border-[#090D16] rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                               title="Masuk sebagai Instruktur">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Login Instruktur</span>
+                                <span class="sm:hidden">Instruktur</span>
                             </a>
                             <a href="{{ route('register') }}"
                                class="min-h-[44px] inline-flex items-center px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition shadow-2xs">

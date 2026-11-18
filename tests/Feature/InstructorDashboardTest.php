@@ -50,7 +50,7 @@ class InstructorDashboardTest extends TestCase
     {
         $this->makeUser('instructor', 'ins@test.com');
 
-        $this->post('/login', ['email' => 'ins@test.com', 'password' => 'Password123!'])
+        $this->post('/instructor/login', ['email' => 'ins@test.com', 'password' => 'Password123!'])
             ->assertRedirect(route('instructor.dashboard'));
     }
 
