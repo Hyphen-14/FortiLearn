@@ -21,7 +21,7 @@ class AuthController extends Controller
     private const LOCKOUT_SECONDS = 60;
 
     /**
-     * Show login form.
+     * Show login form (students / general users).
      */
     public function showLogin(): View
     {
@@ -29,20 +29,43 @@ class AuthController extends Controller
     }
 
     /**
-     * Authenticate user with rate limiting and session fixation prevention.
+     * Show the dedicated instructor login form.
+     */
+    public function showInstructorLogin(): View
+    {
+        return view('auth.instructor-login');
+    }
+
+    /**
+     * Student / general login. Instructor accounts must use the instructor portal.
      */
     public function login(Request $request): RedirectResponse
+    {
+        return $this->authenticate($request, 'student');
+    }
+
+    /**
+     * Instructor-only login. Non-instructor credentials get the same generic error as a wrong password
+     * (no role enumeration).
+     */
+    public function loginInstructor(Request $request): RedirectResponse
+    {
+        return $this->authenticate($request, 'instructor');
+    }
+
+    /**
+     * Shared authentication flow with session fixation prevention.
+     * $portal is chosen by the route (server side), never by the client.
+     */
+    private function authenticate(Request $request, string $portal): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
-        $remember = $request->boolean('remember');
         $throttleKey = $this->loginThrottleKey($request);
 
-        // Anti brute-force: 5 failures per (email, IP) per minute. Checked before the password
-        // so a locked-out attacker gets no signal about whether a guess was right.
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_LOGIN_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($throttleKey);
             Audit::record('auth.lockout', $request, ['email' => $credentials['email'], 'retry_after' => $seconds]);
@@ -52,31 +75,52 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
-        if (Auth::attempt($credentials, $remember)) {
-            // Anti-Session Fixation: Always regenerate session ID upon privilege change/login
-            $request->session()->regenerate();
-            RateLimiter::clear($throttleKey);
-
-            if (! Auth::user()->is_active) {
-                Audit::record('auth.login_blocked_inactive', $request);
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return back()->withErrors(['email' => 'Akun dinonaktifkan oleh administrator.']);
-            }
-
-            Audit::record('auth.login_success', $request);
-
-            return redirect()->intended(route('catalog.index'))
-                ->with('success', 'Selamat datang kembali, ' . Auth::user()->name . '!');
-        }
-
-        RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
-        Audit::record('auth.login_failed', $request, ['email' => $credentials['email']]);
-
-        return back()->withErrors([
+        $failed = back()->withErrors([
             'email' => 'Kombinasi email atau password tidak sesuai.',
         ])->onlyInput('email');
+
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
+            Audit::record('auth.login_failed', $request, ['email' => $credentials['email']]);
+
+            return $failed;
+        }
+
+        $user = Auth::user();
+
+        $reject = function (string $message) use ($request) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors(['email' => $message])->onlyInput('email');
+        };
+
+        if ($portal === 'instructor' && ! $user->isInstructor()) {
+            RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
+            Audit::record('auth.login_failed', $request, ['email' => $credentials['email']]);
+
+            return $reject('Kombinasi email atau password tidak sesuai.');
+        }
+
+        if ($portal === 'student' && $user->isInstructor()) {
+            return $reject('Akun instruktur masuk melalui halaman Login Instruktur.');
+        }
+
+        if (! $user->is_active) {
+            Audit::record('auth.login_blocked_inactive', $request);
+
+            return $reject('Akun dinonaktifkan oleh administrator.');
+        }
+
+        $request->session()->regenerate();
+        RateLimiter::clear($throttleKey);
+        Audit::record('auth.login_success', $request);
+
+        $home = $user->isInstructor() ? route('instructor.dashboard') : route('catalog.index');
+
+        return redirect()->intended($home)
+            ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
     }
 
     private function loginThrottleKey(Request $request): string
@@ -85,18 +129,46 @@ class AuthController extends Controller
     }
 
     /**
-     * Show registration form.
+     * Show student registration form.
      */
     public function showRegister(): View
     {
-        return view('auth.register');
+        return view('auth.register', ['accountType' => 'student']);
     }
 
     /**
-     * Register new student account with strict mass assignment protection.
+     * Show instructor registration form.
+     */
+    public function showRegisterInstructor(): View
+    {
+        return view('auth.register', ['accountType' => 'instructor']);
+    }
+
+    /**
+     * Register a new student account.
      */
     public function register(Request $request): RedirectResponse
     {
+        return $this->createAccount($request, 'student');
+    }
+
+    /**
+     * Register a new instructor account (separate endpoint; role is decided here, never by the client).
+     */
+    public function registerInstructor(Request $request): RedirectResponse
+    {
+        return $this->createAccount($request, 'instructor');
+    }
+
+    /**
+     * Shared registration flow. $role is a server-side constant chosen by the route:
+     * 'role' / 'balance' / 'is_active' in the request body are ignored (anti mass-assignment & privilege escalation).
+     * Only 'student' and 'instructor' can ever be self-registered; admin accounts are never created here.
+     */
+    private function createAccount(Request $request, string $role): RedirectResponse
+    {
+        abort_unless(in_array($role, ['student', 'instructor'], true), 403);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -104,16 +176,22 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'max:72', 'confirmed', Password::defaults()],
         ]);
 
-        // Security: role and balance are NEVER accepted from client request
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+        $user->role = $role; // not mass-assignable by design
+        $user->save();
 
         Auth::login($user);
         $request->session()->regenerate();
         Audit::record('auth.register', $request);
+
+        if ($role === 'instructor') {
+            return redirect()->route('instructor.dashboard')
+                ->with('success', 'Akun instruktur berhasil dibuat! Mulai dengan membuat kursus pertama Anda.');
+        }
 
         return redirect()->route('catalog.index')
             ->with('success', 'Pendaftaran akun berhasil! Selamat datang di FortiLearn.');

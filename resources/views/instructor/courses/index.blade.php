@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.instructor')
 
-@section('title', 'Studio Instruktur')
+@section('title', 'Kursus Saya')
 
 @section('content')
 @php
@@ -14,7 +14,7 @@
 <div class="max-w-6xl mx-auto space-y-7">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-            <span class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 block mb-1">Studio Instruktur</span>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 block mb-1">Kursus Saya</span>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Kelola Course Anda</h1>
             <p class="text-slate-600 text-sm mt-1">Buat course, susun kurikulum, dan unggah materi video/PDF dengan pemeriksaan keamanan otomatis.</p>
         </div>

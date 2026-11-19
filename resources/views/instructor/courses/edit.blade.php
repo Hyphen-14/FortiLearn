@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.instructor')
 
 @section('title', 'Kelola: ' . $course->title)
 
@@ -19,7 +19,7 @@
 <div class="max-w-5xl mx-auto space-y-8">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-            <a href="{{ route('instructor.courses.index') }}" class="text-xs font-bold text-emerald-700 hover:underline">&larr; Kembali ke Studio</a>
+            <a href="{{ route('instructor.courses.index') }}" class="text-xs font-bold text-emerald-700 hover:underline">&larr; Kembali ke Kursus Saya</a>
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mt-2">{{ $course->title }}</h1>
             <span class="inline-block mt-2 px-2.5 py-0.5 rounded-full border text-[11px] font-bold {{ $statusBadge }}">{{ $statusLabel }}</span>
         </div>

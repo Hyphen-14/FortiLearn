@@ -5,7 +5,9 @@ namespace Database\Seeders;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
+use App\Models\Review;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -190,6 +192,39 @@ class DatabaseSeeder extends Seeder
                 ['user_id' => $student1->id, 'course_id' => $enrolledCourse->id],
                 ['enrolled_at' => now()]
             );
+
+            // 6. Demo sales + reviews so the instructor dashboard is populated out of the box.
+            $demo = [
+                [$student1, 5, 'Materinya runtut dan mudah diikuti. Sangat direkomendasikan!', 3],
+                [$student2, 4, 'Penjelasan bagus, semoga ditambah studi kasus lagi.', 1],
+            ];
+            foreach ($demo as [$buyer, $rating, $comment, $daysAgo]) {
+                Enrollment::firstOrCreate(
+                    ['user_id' => $buyer->id, 'course_id' => $enrolledCourse->id],
+                    ['enrolled_at' => now()->subDays($daysAgo)]
+                );
+
+                $ref = 'TRX-DEMO-' . $buyer->id . '-' . $enrolledCourse->id;
+                if (! WalletTransaction::where('reference_number', $ref)->exists()) {
+                    $tx = WalletTransaction::create([
+                        'reference_number' => $ref,
+                        'user_id' => $buyer->id,
+                        'course_id' => $enrolledCourse->id,
+                        'type' => 'purchase',
+                        'amount' => $enrolledCourse->price,
+                        'balance_before' => (float) $buyer->balance + (float) $enrolledCourse->price,
+                        'balance_after' => (float) $buyer->balance,
+                        'status' => 'completed',
+                        'description' => 'Pembelian course: ' . $enrolledCourse->title,
+                    ]);
+                    $tx->forceFill(['created_at' => now()->subDays($daysAgo), 'updated_at' => now()->subDays($daysAgo)])->save();
+                }
+
+                $review = Review::where('course_id', $enrolledCourse->id)->where('user_id', $buyer->id)->first() ?? new Review();
+                $review->course_id = $enrolledCourse->id;
+                $review->user_id = $buyer->id;
+                $review->fill(['rating' => $rating, 'comment' => $comment])->save();
+            }
         }
     }
 }

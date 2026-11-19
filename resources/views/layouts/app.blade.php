@@ -238,7 +238,7 @@
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Instruktur
                         </span>
-                        <a href="{{ route('instructor.courses.index') }}"
+                        <a href="{{ route('instructor.dashboard') }}"
                            class="relative group min-h-[42px] flex items-center justify-center xl:justify-start gap-3 px-3 py-2 rounded-xl text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 {{ request()->routeIs('instructor.*') ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80' }}"
                            title="Studio Instruktur">
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -250,7 +250,6 @@
                     @endif
 
                     @if(auth()->check() && auth()->user()->isAdmin())
-                    <!-- GROUP: ADMIN (Jobdesk 1) -->
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Admin
@@ -275,7 +274,7 @@
                     </div>
                     @endif
 
-                    <!-- GROUP 2: DOMPET & PEMBELIAN -->
+                    @if(! auth()->check() || auth()->user()->isStudent())
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Dompet &amp; Pembelian
@@ -314,6 +313,7 @@
                             </span>
                         </a>
                     </div>
+                    @endif
 
                     <!-- GROUP 3: PUSAT LAYANAN -->
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
@@ -342,6 +342,7 @@
             <!-- Bottom Section: Mini Wallet / Account Status Card + Auth Action -->
             <div class="hidden lg:flex flex-col gap-3 pt-4 border-t border-slate-100">
                 @auth
+                    @if(auth()->user()->isStudent())
                     <div class="hidden xl:block p-3.5 rounded-xl bg-[#090D16] text-white border border-slate-800 space-y-2">
                         <div class="flex items-center justify-between">
                             <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Saldo Dompet</span>
@@ -355,6 +356,7 @@
                             + Isi Saldo Cepat
                         </a>
                     </div>
+                    @endif
 
                     <form action="{{ route('logout') }}" method="POST" class="w-full">
                         @csrf
@@ -376,6 +378,10 @@
                         <a href="{{ route('login') }}"
                            class="w-full py-2 px-3 rounded-lg bg-[#090D16] hover:bg-emerald-600 text-white text-xs font-bold inline-flex items-center justify-center transition">
                             Masuk Akun
+                        </a>
+                        <a href="{{ route('instructor.login') }}"
+                           class="w-full py-2 px-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-bold inline-flex items-center justify-center transition">
+                            Login Instruktur
                         </a>
                     </div>
 
@@ -436,6 +442,7 @@
                     <!-- Right Actions: Wallet Chip & User Profile -->
                     <div class="flex items-center gap-3 shrink-0">
                         @auth
+                            @if(auth()->user()->isStudent())
                             <a href="{{ route('wallet.index') }}"
                                class="min-h-[44px] inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-[#090D16] hover:bg-slate-800 text-white rounded-xl border border-slate-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                                title="Dompet Belajar Anda - Klik untuk Top-Up">
@@ -448,6 +455,7 @@
                                 </div>
                                 <span class="hidden sm:inline-flex items-center justify-center w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-bold">+</span>
                             </a>
+                            @endif
 
                             <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
                                 <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
@@ -460,8 +468,23 @@
                             </div>
                         @else
                             <a href="{{ route('login') }}"
-                               class="min-h-[44px] inline-flex items-center px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition">
-                                Masuk
+                               class="min-h-[44px] min-w-[44px] sm:min-w-[9.5rem] inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-white bg-white hover:bg-[#090D16] border border-slate-300 hover:border-[#090D16] rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                               title="Masuk sebagai Siswa">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Login Siswa</span>
+                                <span class="sm:hidden">Siswa</span>
+                            </a>
+                            <a href="{{ route('instructor.login') }}"
+                               class="min-h-[44px] min-w-[44px] sm:min-w-[9.5rem] inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-white bg-white hover:bg-[#090D16] border border-slate-300 hover:border-[#090D16] rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                               title="Masuk sebagai Instruktur">
+                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Login Instruktur</span>
+                                <span class="sm:hidden">Instruktur</span>
                             </a>
                             <a href="{{ route('register') }}"
                                class="min-h-[44px] inline-flex items-center px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition shadow-2xs">

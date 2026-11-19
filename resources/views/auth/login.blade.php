@@ -116,6 +116,13 @@
                     Daftar gratis sekarang
                 </a>
             </div>
+
+            <div class="mt-4 pt-4 border-t border-slate-100 text-center text-xs text-slate-600">
+                Anda seorang instruktur?
+                <a href="{{ route('instructor.login') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
+                    Login Instruktur
+                </a>
+            </div>
         </div>
     </div>
 </div>
