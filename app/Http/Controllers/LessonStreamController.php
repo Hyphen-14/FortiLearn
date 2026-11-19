@@ -13,15 +13,6 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Secure private streaming of lesson media (Jobdesk 2).
- *
- *  - Files live in storage/app/private/courses and are NEVER reachable through a public URL.
- *  - Every request is authorised with CoursePolicy@viewContent (anti-IDOR).
- *  - The lesson must belong to the course in the URL (blocks cross-course ID swapping).
- *  - The response is chunked (8KB) and supports HTTP Range so video seeking works.
- *  - Physical paths are never exposed; the download name is sanitised.
- */
 class LessonStreamController extends Controller
 {
     private const CHUNK_SIZE = 8192;

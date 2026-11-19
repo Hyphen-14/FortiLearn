@@ -44,21 +44,6 @@
                 </button>
             </form>
 
-            <!-- Quick Demo Account -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <h2 class="text-xs font-bold text-slate-600 mb-3">Akun Demo Instruktur (Klik untuk Mengisi)</h2>
-                <button type="button"
-                        data-fill-email="instructor@secureacademy.test"
-                        data-fill-password="PasswordInstruktur123!"
-                        class="w-full min-h-[48px] p-3 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-500 text-left flex justify-between items-center gap-2 transition text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
-                    <div>
-                        <div class="font-bold text-slate-900">Rizky Pratama, M.Kom.</div>
-                        <div class="font-mono text-slate-500 text-[11px]">instructor@secureacademy.test</div>
-                    </div>
-                    <span class="px-2.5 py-1 bg-white rounded-lg border border-slate-200 text-slate-800 text-[11px] font-bold shrink-0">Pilih Akun</span>
-                </button>
-            </div>
-
             <div class="mt-6 space-y-2 text-center text-xs text-slate-600">
                 <div>
                     Belum punya akun instruktur?
@@ -72,21 +57,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        'use strict';
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        document.querySelectorAll('[data-fill-email]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                if (emailInput && passwordInput) {
-                    emailInput.value = btn.getAttribute('data-fill-email') || '';
-                    passwordInput.value = btn.getAttribute('data-fill-password') || '';
-                    emailInput.focus();
-                }
-            });
-        });
-    })();
-</script>
 @endsection

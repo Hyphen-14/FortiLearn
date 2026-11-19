@@ -181,7 +181,8 @@ class AuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
-        $user->role = $role; // not mass-assignable by design
+        $user->role = $role;
+        $user->free_course_credits = $role === 'student' ? 1 : 0;
         $user->save();
 
         Auth::login($user);

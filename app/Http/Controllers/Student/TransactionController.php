@@ -25,12 +25,6 @@ class TransactionController extends Controller
         ]);
     }
 
-    /**
-     * Display a specific transaction receipt/invoice.
-     * Security:
-     * Anti-IDOR: Gate::authorize('viewReceipt', $transaction) strictly aborts with HTTP 403
-     * if the logged-in user is not the owner (and not an admin).
-     */
     public function show(WalletTransaction $transaction): View
     {
         Gate::authorize('viewReceipt', $transaction);

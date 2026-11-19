@@ -7,18 +7,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-/**
- * Secure upload pipeline for instructor course material (Jobdesk 2).
- *
- * Defence layers (in order):
- *  1. Size limit per type            -> anti-DoS / disk exhaustion
- *  2. Magic-bytes via finfo          -> anti MIME-spoofing (extension & client MIME are ignored)
- *  3. Type must match the slot       -> a PDF cannot be uploaded as "video"
- *  4. Whole-file signature scan      -> rejects "<?php", "<?=" and "<script" anywhere in the file (polyglots)
- *  5. Image re-validation            -> getimagesize() must succeed for thumbnails
- *  6. UUID v4 filename               -> anti path-traversal / file guessing
- *  7. Private disk only              -> storage/app/private/courses (never public/, never symlinked)
- */
 class FileUploadService
 {
     /** Allowed real MIME types => canonical extension. */

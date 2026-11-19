@@ -233,7 +233,6 @@
                     </div>
 
                     @if(auth()->check() && auth()->user()->isInstructor())
-                    <!-- GROUP: STUDIO INSTRUKTUR (Jobdesk 2) -->
                     <div class="flex lg:flex-col items-center lg:items-stretch gap-1 lg:pt-2 lg:border-t lg:border-slate-100">
                         <span class="hidden xl:block px-3 pb-1 text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
                             Instruktur

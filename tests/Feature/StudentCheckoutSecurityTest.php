@@ -277,4 +277,74 @@ class StudentCheckoutSecurityTest extends TestCase
         $this->actingAs($this->student1);
         $this->get(route('catalog.my-courses'))->assertStatus(200);
     }
+
+    /**
+     * Test 11: Newly registered student receives strictly 1 free course credit,
+     * cannot tamper credits via registration/checkout payloads, and must pay for a second course.
+     */
+    public function test_new_student_gets_strictly_one_free_course_credit_and_cannot_tamper_it(): void
+    {
+        $secondCourse = Course::create([
+            'instructor_id' => $this->instructor->id,
+            'title' => 'Cloud Security Architecture',
+            'slug' => 'cloud-security-architecture',
+            'description' => 'Cloud defense course.',
+            'price' => 300000.00,
+            'status' => 'published',
+        ]);
+
+        // Attempt to inject free_course_credits=99 & balance=9999999 during registration
+        $this->post('/register', [
+            'name' => 'New Learner',
+            'email' => 'newlearner@example.com',
+            'password' => 'StrongPass123!',
+            'password_confirmation' => 'StrongPass123!',
+            'free_course_credits' => 99,
+            'balance' => 9999999,
+        ])->assertRedirect(route('catalog.index'));
+
+        $newUser = User::where('email', 'newlearner@example.com')->firstOrFail();
+        $this->assertSame(1, (int) $newUser->free_course_credits);
+        $this->assertEquals(0.00, (float) $newUser->balance);
+
+        // Claim 1st course for free
+        $this->actingAs($newUser);
+        $this->post(route('checkout.process', $this->course->id), [
+            'free_course_credits' => 99,
+            'balance' => 500000,
+            'price' => 0,
+        ]);
+
+        $newUser->refresh();
+        $this->assertSame(0, (int) $newUser->free_course_credits);
+        $this->assertEquals(0.00, (float) $newUser->balance);
+        $this->assertTrue($newUser->hasEnrolled($this->course->id));
+
+        // Attempt to claim 2nd course without balance -> MUST fail
+        $secondAttempt = $this->post(route('checkout.process', $secondCourse->id), [
+            'free_course_credits' => 1,
+            'price' => 0,
+        ]);
+        $secondAttempt->assertRedirect(route('checkout.confirm', $secondCourse->id));
+        $secondAttempt->assertSessionHas('error', 'Saldo tidak mencukupi untuk membeli course ini.');
+        $this->assertFalse($newUser->hasEnrolled($secondCourse->id));
+    }
+
+    /**
+     * Test 12: Quick demo account auto-fill buttons and credentials are completely disabled on login portals.
+     */
+    public function test_quick_demo_accounts_are_disabled_on_login_portals(): void
+    {
+        $studentLogin = $this->get(route('login'));
+        $studentLogin->assertOk();
+        $studentLogin->assertDontSee('Akun Demo Cepat');
+        $studentLogin->assertDontSee('data-fill-email');
+        $studentLogin->assertDontSee('PasswordStudent123!');
+
+        $instructorLogin = $this->get(route('instructor.login'));
+        $instructorLogin->assertOk();
+        $instructorLogin->assertDontSee('Akun Demo Instruktur');
+        $instructorLogin->assertDontSee('data-fill-email');
+        $instructorLogin->assertDontSee('PasswordInstruktur123!');
+    }
 }

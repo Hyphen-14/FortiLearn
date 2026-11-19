@@ -12,10 +12,6 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    /**
-     * Display checkout confirmation page.
-     * Anti-tampering: Price is fetched directly from database.
-     */
     public function showCheckout(Course $course): View|RedirectResponse
     {
         if ($course->status !== 'published') {
@@ -33,26 +29,23 @@ class CheckoutController extends Controller
 
         $userBalance = (float) $user->balance;
         $coursePrice = (float) $course->price;
-        $isBalanceSufficient = $userBalance >= $coursePrice;
-        $remainingBalance = $isBalanceSufficient ? ($userBalance - $coursePrice) : 0;
+        $hasFreeCourseCredit = ((int) $user->free_course_credits) > 0;
+        $effectivePrice = $hasFreeCourseCredit ? 0.00 : $coursePrice;
+        $isBalanceSufficient = $hasFreeCourseCredit || ($userBalance >= $coursePrice);
+        $remainingBalance = $isBalanceSufficient ? round($userBalance - $effectivePrice, 2) : 0;
 
         return view('checkout.confirm', [
             'course' => $course,
             'user' => $user,
             'userBalance' => $userBalance,
             'coursePrice' => $coursePrice,
+            'hasFreeCourseCredit' => $hasFreeCourseCredit,
+            'effectivePrice' => $effectivePrice,
             'isBalanceSufficient' => $isBalanceSufficient,
             'remainingBalance' => $remainingBalance,
         ]);
     }
 
-    /**
-     * Process course purchase atomically.
-     * Security:
-     * 1. Price is NEVER accepted from $request->all() (Anti-Price Tampering).
-     * 2. Transaction uses DB lockForUpdate (Anti-Race Condition & Double Spending).
-     * 3. CSRF token verified by Laravel VerifyCsrfToken middleware.
-     */
     public function processCheckout(Request $request, Course $course, PaymentService $paymentService): RedirectResponse
     {
         $user = auth()->user();

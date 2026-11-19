@@ -28,7 +28,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Explicit Security Policy Registration (Anti-IDOR)
         Gate::policy(Course::class, CoursePolicy::class);
         Gate::policy(WalletTransaction::class, TransactionPolicy::class);
         Gate::policy(User::class, UserPolicy::class);

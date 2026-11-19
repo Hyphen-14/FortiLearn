@@ -78,29 +78,22 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// 3. Student Authenticated Routes (Jobdesk 3) - RBAC: student only (instructors/admins use their own workspaces)
 Route::middleware(['auth', 'role:student'])->group(function () {
-    // Wallet Management & Simulation
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
-    Route::post('/wallet/topup', [WalletController::class, 'topUp'])->name('wallet.topup');
+    Route::post('/wallet/topup', [WalletController::class, 'topUp'])->middleware('throttle:15,1')->name('wallet.topup');
 
-    // Secure Checkout Engine
     Route::get('/checkout/{course}', [CheckoutController::class, 'showCheckout'])->name('checkout.confirm');
-    Route::post('/checkout/{course}', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
+    Route::post('/checkout/{course}', [CheckoutController::class, 'processCheckout'])->middleware('throttle:15,1')->name('checkout.process');
 
-    // Transactions History & IDOR-Protected Invoices
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 
-    // Course reviews (enrolled students only; enforced again inside the controller)
     Route::post('/courses/{course}/reviews', [StudentReviewController::class, 'store'])
         ->whereNumber('course')->middleware('throttle:10,1')->name('reviews.store');
     Route::delete('/courses/{course}/reviews', [StudentReviewController::class, 'destroy'])
         ->whereNumber('course')->name('reviews.destroy');
 });
 
-// 4. Admin Protected Routes (Role: admin)
-// RoleMiddleware gates the whole group; each write action is checked again by a Policy (defense in depth)
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
 
@@ -116,7 +109,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/audit-logs', [AdminAuditLogController::class, 'index'])->name('audit-logs.index');
 });
 
-// 5. Instructor Module (Jobdesk 2 & 4) - RBAC: instructor only; every record is additionally checked by CoursePolicy
 Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('instructor.')->group(function () {
     Route::get('/', fn () => redirect()->route('instructor.dashboard'));
     Route::get('/dashboard', [InstructorDashboardController::class, 'index'])->name('dashboard');

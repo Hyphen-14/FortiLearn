@@ -14,12 +14,6 @@ class TopUpRequest extends FormRequest
         return auth()->check() && auth()->user()->is_active;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     * Strict defense against negative balance, float truncation, or overflow tampering.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [

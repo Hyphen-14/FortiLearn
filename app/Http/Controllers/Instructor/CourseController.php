@@ -16,7 +16,6 @@ use InvalidArgumentException;
 
 class CourseController extends Controller
 {
-    /** Instructor dashboard: only the instructor's own courses are ever queried (anti-IDOR by scoping). */
     public function index(): View
     {
         $courses = Course::withCount(['lessons', 'enrollments'])

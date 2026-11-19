@@ -49,13 +49,27 @@
                 </div>
             </div>
 
+            @if($hasFreeCourseCredit)
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3">
+                    <div>
+                        <div class="text-xs font-extrabold text-emerald-900">Kredit Kursus Gratis Pertama Tersedia</div>
+                        <p class="text-xs text-emerald-800 mt-0.5">Sebagai anggota baru, Anda berhak mengklaim 1 kursus pilihan Anda secara gratis tanpa memotong saldo dompet.</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold shrink-0">1x Gratis</span>
+                </div>
+            @endif
+
             <!-- Financial Balance Summary Box -->
             <div class="rounded-xl border p-6 {{ $isBalanceSufficient ? 'border-slate-200 bg-white' : 'border-rose-200 bg-rose-50/40' }}">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Rincian Pembayaran Dompet Belajar
                     </h3>
-                    @if($isBalanceSufficient)
+                    @if($hasFreeCourseCredit)
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                            Gratis Member Baru
+                        </span>
+                    @elseif($isBalanceSufficient)
                         <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                             Saldo Mencukupi
                         </span>
@@ -76,9 +90,15 @@
 
                     <div class="flex justify-between items-center text-slate-600">
                         <span>Total Pembayaran Kelas:</span>
-                        <span class="font-mono font-bold text-rose-600 tabular-nums">
-                            - Rp {{ number_format($coursePrice, 0, ',', '.') }}
-                        </span>
+                        @if($hasFreeCourseCredit)
+                            <span class="font-mono font-bold text-emerald-700 tabular-nums">
+                                Rp 0 (Kredit Kursus Gratis)
+                            </span>
+                        @else
+                            <span class="font-mono font-bold text-rose-600 tabular-nums">
+                                - Rp {{ number_format($coursePrice, 0, ',', '.') }}
+                            </span>
+                        @endif
                     </div>
 
                     <div class="pt-3 border-t border-slate-200 flex justify-between items-center text-base font-extrabold">
@@ -140,7 +160,13 @@
                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <span class="font-mono tabular-nums">Konfirmasi &amp; Bayar Rp {{ number_format($coursePrice, 0, ',', '.') }}</span>
+                            <span class="font-mono tabular-nums">
+                                @if($hasFreeCourseCredit)
+                                    Klaim Kursus Gratis Pertama
+                                @else
+                                    Konfirmasi &amp; Bayar Rp {{ number_format($coursePrice, 0, ',', '.') }}
+                                @endif
+                            </span>
                         </button>
                     </div>
                 </form>

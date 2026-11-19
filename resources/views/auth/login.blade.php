@@ -72,44 +72,6 @@
                 </button>
             </form>
 
-            <!-- Quick Demo Account Selector -->
-            <div class="mt-8 pt-6 border-t border-slate-100">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-xs font-bold text-slate-600">
-                        Akun Demo Cepat (Klik untuk Masuk)
-                    </h2>
-                    <span class="text-[11px] font-semibold text-emerald-700">Siap Pakai</span>
-                </div>
-
-                <div class="space-y-2 text-xs">
-                    <button type="button"
-                            data-fill-email="student1@secureacademy.test"
-                            data-fill-password="PasswordStudent123!"
-                            class="w-full min-h-[48px] p-3 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-500 text-left flex justify-between items-center gap-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
-                        <div>
-                            <div class="font-bold text-slate-900">Alice Maharani (Saldo Rp 500.000)</div>
-                            <div class="font-mono text-slate-500 text-[11px]">student1@secureacademy.test</div>
-                        </div>
-                        <span class="px-2.5 py-1 bg-white rounded-lg border border-slate-200 text-slate-800 text-[11px] font-bold shrink-0">
-                            Pilih Akun
-                        </span>
-                    </button>
-
-                    <button type="button"
-                            data-fill-email="student2@secureacademy.test"
-                            data-fill-password="PasswordStudent123!"
-                            class="w-full min-h-[48px] p-3 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-500 text-left flex justify-between items-center gap-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
-                        <div>
-                            <div class="font-bold text-slate-900">Budi Hartono (Saldo Rp 100.000)</div>
-                            <div class="font-mono text-slate-500 text-[11px]">student2@secureacademy.test</div>
-                        </div>
-                        <span class="px-2.5 py-1 bg-white rounded-lg border border-slate-200 text-slate-800 text-[11px] font-bold shrink-0">
-                            Pilih Akun
-                        </span>
-                    </button>
-                </div>
-            </div>
-
             <div class="mt-6 text-center text-xs text-slate-600">
                 Belum memiliki akun?
                 <a href="{{ route('register') }}" class="font-bold text-emerald-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded">
@@ -126,22 +88,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    (function () {
-        'use strict';
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-
-        document.querySelectorAll('[data-fill-email]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                if (emailInput && passwordInput) {
-                    emailInput.value = btn.getAttribute('data-fill-email') || '';
-                    passwordInput.value = btn.getAttribute('data-fill-password') || '';
-                    emailInput.focus();
-                }
-            });
-        });
-    })();
-</script>
 @endsection

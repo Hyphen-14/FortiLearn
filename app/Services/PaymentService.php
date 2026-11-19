@@ -19,16 +19,15 @@ class PaymentService
      */
     public function topUpBalance(User $user, float $amount): WalletTransaction
     {
-        if ($amount <= 0 || $amount > 10000000) { // Limit max top up 10 juta
+        if ($amount < 10000 || $amount > 10000000) {
             throw new Exception('Nominal top-up tidak valid (harus antara Rp 10.000 hingga Rp 10.000.000).');
         }
 
         return DB::transaction(function () use ($user, $amount) {
-            // Pessimistic Locking to protect concurrent balance updates
             $lockedUser = User::where('id', $user->id)->lockForUpdate()->firstOrFail();
 
             $balanceBefore = (float) $lockedUser->balance;
-            $balanceAfter = $balanceBefore + $amount;
+            $balanceAfter = round($balanceBefore + $amount, 2);
 
             $lockedUser->balance = $balanceAfter;
             $lockedUser->save();
@@ -47,25 +46,17 @@ class PaymentService
         });
     }
 
-    /**
-     * Purchase course with atomic transaction & pessimistic locking (anti-race condition & price tampering).
-     *
-     * @throws Exception
-     */
     public function purchaseCourse(User $user, int $courseId): array
     {
         return DB::transaction(function () use ($user, $courseId) {
-            // 1. Pessimistic Lock on User row (prevents concurrent race condition/double-spending)
             $lockedUser = User::where('id', $user->id)->lockForUpdate()->firstOrFail();
 
-            // 2. Anti-Price Tampering: Always fetch price directly from DB
             $course = Course::where('id', $courseId)->firstOrFail();
 
             if ($course->status !== 'published') {
                 throw new Exception('Course ini tidak tersedia untuk dibeli.');
             }
 
-            // 3. Prevent duplicate enrollment
             $alreadyEnrolled = Enrollment::where('user_id', $lockedUser->id)
                 ->where('course_id', $course->id)
                 ->exists();
@@ -74,33 +65,42 @@ class PaymentService
                 throw new Exception('Anda sudah terdaftar pada course ini.');
             }
 
-            $price = (float) $course->price;
             $currentBalance = (float) $lockedUser->balance;
+            $usedFreeCredit = false;
 
-            // 4. Strict balance check
-            if ($currentBalance < $price) {
-                throw new Exception('Saldo tidak mencukupi untuk membeli course ini.');
+            if ((int) $lockedUser->free_course_credits > 0) {
+                $usedFreeCredit = true;
+                $effectivePrice = 0.00;
+                $newBalance = $currentBalance;
+                $lockedUser->free_course_credits = (int) $lockedUser->free_course_credits - 1;
+            } else {
+                $effectivePrice = (float) $course->price;
+                if ($currentBalance < $effectivePrice) {
+                    throw new Exception('Saldo tidak mencukupi untuk membeli course ini.');
+                }
+                $newBalance = round($currentBalance - $effectivePrice, 2);
+                if ($newBalance < 0) {
+                    throw new Exception('Saldo tidak mencukupi untuk membeli course ini.');
+                }
+                $lockedUser->balance = $newBalance;
             }
 
-            // 5. Atomic Balance Deduction
-            $newBalance = $currentBalance - $price;
-            $lockedUser->balance = $newBalance;
             $lockedUser->save();
 
-            // 6. Create Transaction Log
             $transaction = WalletTransaction::create([
                 'reference_number' => 'TRX-BUY-' . strtoupper(Str::random(10)),
                 'user_id' => $lockedUser->id,
                 'course_id' => $course->id,
                 'type' => 'purchase',
-                'amount' => $price,
+                'amount' => $effectivePrice,
                 'balance_before' => $currentBalance,
                 'balance_after' => $newBalance,
                 'status' => 'completed',
-                'description' => 'Pembelian course: ' . $course->title,
+                'description' => $usedFreeCredit
+                    ? 'Klaim kursus gratis pertama: ' . $course->title
+                    : 'Pembelian course: ' . $course->title,
             ]);
 
-            // 7. Grant Enrollment
             $enrollment = Enrollment::create([
                 'user_id' => $lockedUser->id,
                 'course_id' => $course->id,

@@ -20,52 +20,56 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Admin Account
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@secureacademy.test'],
-            ['name' => 'Administrator Utama', 'password' => 'PasswordAdmin123!']
+        User::where('email', 'like', '%@secureacademy.test')->update(['is_active' => false]);
+
+        $admin = User::updateOrCreate(
+            ['email' => env('ADMIN_SEED_EMAIL', 'admin@fortilearn.local')],
+            ['name' => 'Administrator Utama', 'password' => env('ADMIN_SEED_PASSWORD', \Illuminate\Support\Str::random(32))]
         );
         $admin->role = 'admin';
         $admin->balance = 0.00;
+        $admin->free_course_credits = 0;
         $admin->is_active = true;
         $admin->save();
 
-        // 2. Instructors across Disciplines
-        $instructorTech = User::firstOrCreate(
-            ['email' => 'instructor@secureacademy.test'],
-            ['name' => 'Rizky Pratama, M.Kom.', 'password' => 'PasswordInstruktur123!']
+        $instructorTech = User::updateOrCreate(
+            ['email' => 'instructor@fortilearn.local'],
+            ['name' => 'Rizky Pratama, M.Kom.', 'password' => \Illuminate\Support\Str::random(48)]
         );
         $instructorTech->role = 'instructor';
         $instructorTech->balance = 0.00;
-        $instructorTech->is_active = true;
+        $instructorTech->free_course_credits = 0;
+        $instructorTech->is_active = false;
         $instructorTech->save();
 
-        $instructorDesign = User::firstOrCreate(
-            ['email' => 'design.mentor@secureacademy.test'],
-            ['name' => 'Nadia Kusuma, S.Ds.', 'password' => 'PasswordInstruktur123!']
+        $instructorDesign = User::updateOrCreate(
+            ['email' => 'design.mentor@fortilearn.local'],
+            ['name' => 'Nadia Kusuma, S.Ds.', 'password' => \Illuminate\Support\Str::random(48)]
         );
         $instructorDesign->role = 'instructor';
         $instructorDesign->balance = 0.00;
-        $instructorDesign->is_active = true;
+        $instructorDesign->free_course_credits = 0;
+        $instructorDesign->is_active = false;
         $instructorDesign->save();
 
-        // 3. Student Accounts with Wallet Balance
-        $student1 = User::firstOrCreate(
-            ['email' => 'student1@secureacademy.test'],
-            ['name' => 'Alice Maharani', 'password' => 'PasswordStudent123!']
+        $student1 = User::updateOrCreate(
+            ['email' => 'student1@fortilearn.local'],
+            ['name' => 'Alice Maharani', 'password' => \Illuminate\Support\Str::random(48)]
         );
         $student1->role = 'student';
-        $student1->balance = 500000.00;
-        $student1->is_active = true;
+        $student1->balance = 0.00;
+        $student1->free_course_credits = 0;
+        $student1->is_active = false;
         $student1->save();
 
-        $student2 = User::firstOrCreate(
-            ['email' => 'student2@secureacademy.test'],
-            ['name' => 'Budi Hartono', 'password' => 'PasswordStudent123!']
+        $student2 = User::updateOrCreate(
+            ['email' => 'student2@fortilearn.local'],
+            ['name' => 'Budi Hartono', 'password' => \Illuminate\Support\Str::random(48)]
         );
         $student2->role = 'student';
-        $student2->balance = 100000.00;
-        $student2->is_active = true;
+        $student2->balance = 0.00;
+        $student2->free_course_credits = 0;
+        $student2->is_active = false;
         $student2->save();
 
         // 4. Multi-Category Commercial Courses (Udemy-style Marketplace)
